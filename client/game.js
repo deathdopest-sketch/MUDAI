@@ -29,9 +29,23 @@ const charDisplay  = $('char-display');
 const roomDisplay  = $('room-display');
 const invDisplay   = $('inv-display');
 
+// ── Connection state ──────────────────────────────────────────────────────────
+socket.on('disconnect', () => {
+  addFeed('error', 'Connection lost. Reconnecting...');
+});
+
+socket.on('connect', () => {
+  if (myUsername) addFeed('system', 'Reconnected.');
+});
+
 // ── Auth flow ─────────────────────────────────────────────────────────────────
 socket.on('request_auth', () => {
-  authOverlay.style.display = 'flex';
+  if (myUsername) {
+    // Silently re-auth on reconnect — don't interrupt the game
+    socket.emit('auth', { username: myUsername });
+  } else {
+    authOverlay.style.display = 'flex';
+  }
 });
 
 $('auth-btn').addEventListener('click', submitAuth);
