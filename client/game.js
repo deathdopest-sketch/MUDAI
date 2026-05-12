@@ -77,6 +77,8 @@ socket.on('auth_err', ({ message }) => {
 // ── Password flow ─────────────────────────────────────────────────────────────
 socket.on('needs_password', ({ username }) => {
   _passwordMode = 'verify';
+  authOverlay.style.display = 'none';
+  charOverlay.style.display = 'none';
   passwordIntro.textContent = `Welcome back, ${username}. Enter your password.`;
   passwordErr.textContent   = '';
   passwordInput.value       = '';
@@ -86,6 +88,8 @@ socket.on('needs_password', ({ username }) => {
 
 socket.on('needs_password_create', ({ username, isNew }) => {
   _passwordMode = 'create';
+  authOverlay.style.display = 'none';
+  charOverlay.style.display = 'none';
   passwordIntro.textContent = isNew
     ? `One last thing — set a password to protect your account.`
     : `Set a password for ${username} to secure your account.`;
