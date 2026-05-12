@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mudai
+    env: node
+    buildCommand: npm install
+    startCommand: node server/index.js
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: https://oocavofgheasnualapip.supabase.co
+      - key: SUPABASE_ANON_KEY
+        sync: false

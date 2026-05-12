@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M.UD.AI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Auth overlay ─────────────────────────────────────── -->
+<div id="auth-overlay">
+  <div id="auth-box">
+    <pre id="auth-logo">
+ ███╗   ███╗██╗   ██╗██████╗      █████╗ ██╗
+ ████╗ ████║██║   ██║██╔══██╗    ██╔══██╗██║
+ ██╔████╔██║██║   ██║██║  ██║    ███████║██║
+ ██║╚██╔╝██║██║   ██║██║  ██║    ██╔══██║██║
+ ██║ ╚═╝ ██║╚██████╔╝██████╔╝    ██║  ██║██║
+ ╚═╝     ╚═╝ ╚═════╝ ╚═════╝     ╚═╝  ╚═╝╚═╝</pre>
+    <p id="auth-sub">A Living Text World · Stone Age Edition</p>
+    <div id="auth-form">
+      <input id="auth-input" type="text" placeholder="Enter your username..." maxlength="24" autocomplete="off" spellcheck="false">
+      <button id="auth-btn">ENTER THE WORLD</button>
+    </div>
+    <p id="auth-err"></p>
+  </div>
+</div>
+
+<!-- ── Char create overlay ──────────────────────────────── -->
+<div id="char-overlay" style="display:none">
+  <div id="char-box">
+    <p id="char-intro">New soul detected. Name your caveman.</p>
+    <input id="char-input" type="text" placeholder="Character name..." maxlength="20" autocomplete="off" spellcheck="false">
+    <button id="char-btn">BEGIN</button>
+  </div>
+</div>
+
+<!-- ── Main game UI ─────────────────────────────────────── -->
+<div id="game" style="display:none">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <span id="tb-title">M.UD.AI</span>
+    <div id="tb-age">
+      <span id="age-name">Stone Age</span>
+      <div id="age-bar-wrap"><div id="age-bar"></div></div>
+      <span id="age-pct">0%</span>
+    </div>
+    <span id="tb-online">0 online</span>
+  </div>
+
+  <!-- Main area -->
+  <div id="main-area">
+
+    <!-- Feed -->
+    <div id="feed-panel">
+      <div id="feed"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+
+      <div class="sb-section" id="sb-online">
+        <div class="sb-title">ONLINE</div>
+        <div id="online-list"><span class="dim">Nobody yet.</span></div>
+      </div>
+
+      <div class="sb-section" id="sb-char">
+        <div class="sb-title">CHARACTER</div>
+        <div id="char-display"></div>
+      </div>
+
+      <div class="sb-section" id="sb-room">
+        <div class="sb-title">ROOM</div>
+        <div id="room-display"></div>
+      </div>
+
+      <div class="sb-section" id="sb-inv">
+        <div class="sb-title">INVENTORY</div>
+        <div id="inv-display"><span class="dim">Empty.</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div id="input-bar">
+    <span id="prompt">&gt;</span>
+    <input id="cmd-input" type="text" autocomplete="off" spellcheck="false" placeholder="type a command...">
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

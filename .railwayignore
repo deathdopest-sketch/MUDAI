@@ -1,0 +1,7 @@
+data/characters.json
+data/gold.json
+data/world_state.json
+data/mud_events.json
+node_modules
+*.log
+.env
