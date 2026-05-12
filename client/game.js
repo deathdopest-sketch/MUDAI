@@ -12,22 +12,28 @@ let MAX_FEED   = 300; // lines to keep in DOM
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
-const authOverlay  = $('auth-overlay');
-const charOverlay  = $('char-overlay');
-const gameEl       = $('game');
-const feedEl       = $('feed');
-const cmdInput     = $('cmd-input');
-const authInput    = $('auth-input');
-const authErr      = $('auth-err');
-const charInput    = $('char-input');
-const ageName      = $('age-name');
-const ageBar       = $('age-bar');
-const agePct       = $('age-pct');
-const tbOnline     = $('tb-online');
-const onlineList   = $('online-list');
-const charDisplay  = $('char-display');
-const roomDisplay  = $('room-display');
-const invDisplay   = $('inv-display');
+const authOverlay     = $('auth-overlay');
+const charOverlay     = $('char-overlay');
+const passwordOverlay = $('password-overlay');
+const gameEl          = $('game');
+const feedEl          = $('feed');
+const cmdInput        = $('cmd-input');
+const authInput       = $('auth-input');
+const authErr         = $('auth-err');
+const charInput       = $('char-input');
+const passwordInput   = $('password-input');
+const passwordIntro   = $('password-intro');
+const passwordErr     = $('password-err');
+const ageName         = $('age-name');
+const ageBar          = $('age-bar');
+const agePct          = $('age-pct');
+const tbOnline        = $('tb-online');
+const onlineList      = $('online-list');
+const charDisplay     = $('char-display');
+const roomDisplay     = $('room-display');
+const invDisplay      = $('inv-display');
+
+let _passwordMode = 'verify'; // 'verify' | 'create'
 
 // ── Connection state ──────────────────────────────────────────────────────────
 socket.on('disconnect', () => {
@@ -59,8 +65,49 @@ function submitAuth() {
 }
 
 socket.on('auth_err', ({ message }) => {
-  authErr.textContent = message;
+  if (passwordOverlay.style.display !== 'none') {
+    passwordErr.textContent = message;
+    passwordInput.value = '';
+    passwordInput.focus();
+  } else {
+    authErr.textContent = message;
+  }
 });
+
+// ── Password flow ─────────────────────────────────────────────────────────────
+socket.on('needs_password', ({ username }) => {
+  _passwordMode = 'verify';
+  passwordIntro.textContent = `Welcome back, ${username}. Enter your password.`;
+  passwordErr.textContent   = '';
+  passwordInput.value       = '';
+  passwordOverlay.style.display = 'flex';
+  setTimeout(() => passwordInput.focus(), 100);
+});
+
+socket.on('needs_password_create', ({ username, isNew }) => {
+  _passwordMode = 'create';
+  passwordIntro.textContent = isNew
+    ? `One last thing — set a password to protect your account.`
+    : `Set a password for ${username} to secure your account.`;
+  passwordErr.textContent   = '';
+  passwordInput.value       = '';
+  passwordOverlay.style.display = 'flex';
+  setTimeout(() => passwordInput.focus(), 100);
+});
+
+$('password-btn').addEventListener('click', submitPassword);
+passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
+
+function submitPassword() {
+  const pw = passwordInput.value;
+  if (!pw) return;
+  passwordErr.textContent = '';
+  if (_passwordMode === 'verify') {
+    socket.emit('submit_password', { password: pw });
+  } else {
+    socket.emit('create_password', { password: pw });
+  }
+}
 
 socket.on('needs_char_create', ({ username }) => {
   myUsername = username;
@@ -81,9 +128,10 @@ function submitChar() {
 socket.on('auth_ok', ({ username, char, isNew }) => {
   myUsername = username;
   myChar     = char;
-  authOverlay.style.display = 'none';
-  charOverlay.style.display = 'none';
-  gameEl.style.display      = 'flex';
+  authOverlay.style.display     = 'none';
+  charOverlay.style.display     = 'none';
+  passwordOverlay.style.display = 'none';
+  gameEl.style.display          = 'flex';
   renderChar(char);
   setTimeout(() => cmdInput.focus(), 100);
 });

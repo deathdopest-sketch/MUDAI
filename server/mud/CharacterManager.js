@@ -80,6 +80,21 @@ class CharacterManager {
 
   get(username) { return this._chars[username.toLowerCase()] || null; }
 
+  getPasswordHash(username) {
+    return this._chars[username.toLowerCase()]?.password_hash || null;
+  }
+
+  async setPasswordHash(username, hash) {
+    const k = username.toLowerCase();
+    if (!this._chars[k]) return;
+    this._chars[k].password_hash = hash;
+    if (this._store) {
+      await this._store.saveChar(this._chars[k]);
+    } else {
+      this.save();
+    }
+  }
+
   create(username, charName) {
     const k   = username.toLowerCase();
     const con = 5;

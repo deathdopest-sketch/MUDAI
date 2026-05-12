@@ -1,7 +1,8 @@
 'use strict';
 
-const { ROOMS, STARTING_ROOM } = require('./mud/WorldMap');
-const { AGES, ITEM_TEMPLATES }  = require('./mud/WorldAges');
+const bcrypt                     = require('bcryptjs');
+const { ROOMS, STARTING_ROOM }   = require('./mud/WorldMap');
+const { AGES, ITEM_TEMPLATES }   = require('./mud/WorldAges');
 const { Shop }                   = require('./mud/Shop');
 const CommandParser              = require('./CommandParser');
 const GoldBridge                 = require('./economy/GoldBridge');
@@ -29,10 +30,12 @@ class GameEngine {
   onConnect(socket) {
     socket.emit('request_auth');
 
-    socket.on('auth',        data => this._handleAuth(socket, data));
-    socket.on('create_char', data => this._handleCreateChar(socket, data));
-    socket.on('command',     data => this._handleCommand(socket, data?.text || ''));
-    socket.on('disconnect',  ()   => this._handleDisconnect(socket));
+    socket.on('auth',            data => this._handleAuth(socket, data));
+    socket.on('create_char',     data => this._handleCreateChar(socket, data));
+    socket.on('submit_password', data => this._handleSubmitPassword(socket, data));
+    socket.on('create_password', data => this._handleCreatePassword(socket, data));
+    socket.on('command',         data => this._handleCommand(socket, data?.text || ''));
+    socket.on('disconnect',      ()   => this._handleDisconnect(socket));
   }
 
   async _handleAuth(socket, { username } = {}) {
@@ -46,8 +49,70 @@ class GameEngine {
       return;
     }
 
-    // Kick any existing session for this user
-    const existing = this.sessions.getByUser(clean);
+    const char = this.chars.get(clean);
+    if (!char) {
+      socket._pendingUsername = clean;
+      socket.emit('needs_char_create', { username: clean });
+      return;
+    }
+
+    // Existing account — go through password gate before kicking others or granting access
+    socket._pendingAuth = { username: clean };
+    const hash = this.chars.getPasswordHash(clean);
+    if (hash) {
+      socket.emit('needs_password', { username: clean });
+    } else {
+      // Legacy account with no password — ask them to set one
+      socket.emit('needs_password_create', { username: clean, isNew: false });
+    }
+  }
+
+  _handleCreateChar(socket, { charName } = {}) {
+    const username = socket._pendingUsername;
+    if (!username) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
+    const safeName = (charName || username).trim().replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 20) || username;
+    this.chars.create(username, safeName);
+    // Don't enter the world yet — ask them to set a password first
+    socket._pendingAuth = { username, isNew: true };
+    socket.emit('needs_password_create', { username, isNew: true });
+  }
+
+  async _handleSubmitPassword(socket, { password } = {}) {
+    const pending = socket._pendingAuth;
+    if (!pending) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
+
+    const hash = this.chars.getPasswordHash(pending.username);
+    if (!hash) { socket.emit('auth_err', { message: 'No password on file.' }); return; }
+
+    const ok = await bcrypt.compare(password || '', hash);
+    if (!ok) {
+      socket.emit('auth_err', { message: 'Wrong password. Try again.' });
+      return;
+    }
+
+    this._finishAuth(socket, pending.username, false);
+  }
+
+  async _handleCreatePassword(socket, { password } = {}) {
+    const pending = socket._pendingAuth;
+    if (!pending) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
+    if (!password || password.length < 4) {
+      socket.emit('auth_err', { message: 'Password must be at least 4 characters.' });
+      return;
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    await this.chars.setPasswordHash(pending.username, hash);
+
+    this._finishAuth(socket, pending.username, pending.isNew || false);
+  }
+
+  _finishAuth(socket, username, isNew) {
+    socket._pendingAuth    = null;
+    socket._pendingUsername = null;
+
+    // Now it's safe to kick any existing session
+    const existing = this.sessions.getByUser(username);
     if (existing) {
       const oldSock = this.io.sockets.sockets.get(existing.socketId);
       if (oldSock) {
@@ -56,23 +121,8 @@ class GameEngine {
       }
     }
 
-    const char = this.chars.get(clean);
-    if (!char) {
-      // Store username on socket for create_char
-      socket._pendingUsername = clean;
-      socket.emit('needs_char_create', { username: clean });
-      return;
-    }
-
-    this._completeAuth(socket, clean, char, false);
-  }
-
-  _handleCreateChar(socket, { charName } = {}) {
-    const username = socket._pendingUsername;
-    if (!username) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
-    const safeName = (charName || username).trim().replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 20) || username;
-    const char     = this.chars.create(username, safeName);
-    this._completeAuth(socket, username, char, true);
+    const char = this.chars.get(username);
+    this._completeAuth(socket, username, char, isNew);
   }
 
   _completeAuth(socket, username, char, isNew) {

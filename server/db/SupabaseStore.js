@@ -28,9 +28,10 @@ class SupabaseStore {
       inventory : row.inventory,
       kills     : row.kills,
       deaths    : row.deaths,
-      gold      : row.gold || 0,
-      created_at: new Date(row.created_at).getTime(),
-      last_seen : new Date(row.last_seen).getTime(),
+      gold         : row.gold || 0,
+      password_hash: row.password_hash || null,
+      created_at   : new Date(row.created_at).getTime(),
+      last_seen    : new Date(row.last_seen).getTime(),
     };
   }
 
@@ -53,6 +54,7 @@ class SupabaseStore {
       deaths   : char.deaths,
       gold     : char.gold || 0,
       last_seen: new Date(char.last_seen || Date.now()).toISOString(),
+      ...(char.password_hash ? { password_hash: char.password_hash } : {}),
     };
   }
 

@@ -40,14 +40,14 @@ html, body {
 }
 
 /* ── Auth overlay ─────────────────────────────────────── */
-#auth-overlay, #char-overlay {
+#auth-overlay, #char-overlay, #password-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.92);
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
 }
 
-#auth-box, #char-box {
+#auth-box, #char-box, #password-box {
   background: var(--bg-panel);
   border: 1px solid var(--border);
   padding: 40px 48px;
@@ -72,7 +72,7 @@ html, body {
   text-transform: uppercase;
 }
 
-#auth-form, #char-box {
+#auth-form, #char-box, #password-box {
   display: flex; flex-direction: column; gap: 12px; align-items: center;
 }
 
@@ -87,9 +87,9 @@ html, body {
   outline: none;
   text-align: center;
 }
-#auth-input:focus, #char-input:focus { border-color: var(--green); }
+#auth-input:focus, #char-input:focus, #password-input:focus { border-color: var(--green); }
 
-#auth-btn, #char-btn {
+#auth-btn, #char-btn, #password-btn {
   background: transparent;
   border: 1px solid var(--green);
   color: var(--green);
@@ -100,11 +100,25 @@ html, body {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-#auth-btn:hover, #char-btn:hover { background: var(--green); color: var(--bg); }
+#auth-btn:hover, #char-btn:hover, #password-btn:hover { background: var(--green); color: var(--bg); }
 
 #auth-err { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 8px; }
 
 #char-intro { color: var(--text-dim); margin-bottom: 16px; font-size: 12px; }
+
+#password-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 10px 16px;
+  width: 280px;
+  outline: none;
+  letter-spacing: 2px;
+}
+#password-intro { color: var(--text-dim); margin-bottom: 16px; font-size: 12px; }
+#password-err   { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 4px; }
 
 /* ── Game layout ──────────────────────────────────────── */
 #game {
