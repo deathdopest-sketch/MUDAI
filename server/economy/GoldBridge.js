@@ -18,11 +18,6 @@ class GoldBridge {
     if (charStore) return; // Supabase mode — no file needed
 
     this._file = goldFilePath;
-    if (!fs.existsSync(this._file)) {
-      const local = path.resolve(path.join(path.dirname(this._file), '..', 'data', 'gold.json'));
-      this._file  = local;
-      this.log?.warn(`[GoldBridge] SirLoin gold.json not found — using local: ${local}`);
-    }
   }
 
   // ── File-mode helpers ─────────────────────────────────────────────────────

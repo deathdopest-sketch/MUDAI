@@ -20,8 +20,7 @@ const GameEngine       = require('./GameEngine');
 const DATA_DIR   = path.join(__dirname, '..', 'data');
 const CLIENT_DIR = path.join(__dirname, '..', 'client');
 const PORT       = process.env.PORT || 3000;
-const GOLD_FILE  = process.env.GOLD_FILE ||
-  path.join(__dirname, '..', '..', 'SirLoin_v1', 'SirLoin_Data', 'gold.json');
+const GOLD_FILE  = process.env.GOLD_FILE || path.join(DATA_DIR, 'gold.json');
 const WS_FILE    = path.join(DATA_DIR, 'world_state.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
