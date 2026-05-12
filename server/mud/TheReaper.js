@@ -1,6 +1,7 @@
 'use strict';
 
-const http = require('http');
+const http  = require('http');
+const https = require('https');
 
 const SYSTEM_PROMPT = `You are The Reaper — Death itself given a voice and an attitude.
 You narrate a text-based RPG called M.UD.AI. The world is currently in the {{AGE}}.
@@ -57,19 +58,27 @@ class TheReaper {
   constructor(config = {}, logger) {
     this.log    = logger;
     this.config = {
-      host   : config.host  || 'http://localhost:11434',
-      model  : config.model || 'llama3',
-      timeout: config.timeout || 15000,
+      host     : config.host      || 'http://localhost:11434',
+      model    : config.model     || 'llama3',
+      timeout  : config.timeout   || 15000,
+      groqKey  : config.groqKey   || null,
+      groqModel: config.groqModel || 'llama3-8b-8192',
     };
+    this._mode      = this.config.groqKey ? 'groq' : 'ollama';
     this.available  = false;
     this._lastUsed  = 0;
-    this._MIN_GAP   = 9000; // 9s minimum between calls
+    this._MIN_GAP   = 9000;
     this._currentAge = 'Stone Age';
   }
 
   setAge(ageName) { this._currentAge = ageName; }
 
   async checkAvailable() {
+    if (this._mode === 'groq') {
+      this.available = true;
+      this.log?.info(`[TheReaper] Groq mode — model: ${this.config.groqModel}`);
+      return true;
+    }
     try {
       const res = await this._request('/api/tags', 'GET', null, 4000);
       this.available = Array.isArray(res?.models) && res.models.length > 0;
@@ -114,6 +123,7 @@ class TheReaper {
   }
 
   async _chat(userContent) {
+    if (this._mode === 'groq') return this._chatGroq(userContent);
     const system = SYSTEM_PROMPT.replace('{{AGE}}', this._currentAge);
     const body   = JSON.stringify({
       model   : this.config.model,
@@ -126,6 +136,49 @@ class TheReaper {
     });
     const res = await this._request('/api/chat', 'POST', body, this.config.timeout);
     return (res?.message?.content || '').trim();
+  }
+
+  async _chatGroq(userContent) {
+    const system = SYSTEM_PROMPT.replace('{{AGE}}', this._currentAge);
+    const body   = JSON.stringify({
+      model      : this.config.groqModel,
+      messages   : [
+        { role: 'system', content: system },
+        { role: 'user',   content: userContent },
+      ],
+      max_tokens : 120,
+      temperature: 0.95,
+    });
+    const res = await this._requestGroq(body);
+    return (res?.choices?.[0]?.message?.content || '').trim();
+  }
+
+  _requestGroq(body) {
+    return new Promise((resolve, reject) => {
+      const opts = {
+        hostname: 'api.groq.com',
+        path    : '/openai/v1/chat/completions',
+        method  : 'POST',
+        headers : {
+          'Content-Type' : 'application/json',
+          'Authorization': `Bearer ${this.config.groqKey}`,
+          'Content-Length': Buffer.byteLength(body),
+        },
+        timeout: this.config.timeout,
+      };
+      const req = https.request(opts, res => {
+        let data = '';
+        res.on('data', c => (data += c));
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); }
+          catch (_) { reject(new Error('Bad JSON from Groq')); }
+        });
+      });
+      req.on('error',   reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('Groq timed out')); });
+      req.write(body);
+      req.end();
+    });
   }
 
   _request(endpoint, method, body, timeout = 10000) {

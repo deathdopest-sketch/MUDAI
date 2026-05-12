@@ -93,8 +93,10 @@ async function main() {
   // Other systems
   const spawner  = new MonsterSpawner(log);
   const reaper   = new TheReaper({
-    host : process.env.OLLAMA_HOST  || 'http://localhost:11434',
-    model: process.env.OLLAMA_MODEL || 'llama3',
+    host     : process.env.OLLAMA_HOST  || 'http://localhost:11434',
+    model    : process.env.OLLAMA_MODEL || 'llama3',
+    groqKey  : process.env.GROQ_API_KEY || null,
+    groqModel: process.env.GROQ_MODEL   || 'llama3-8b-8192',
   }, log);
   const sessions = new SessionManager();
   const combat   = new CombatEngine(chars, spawner, gold, log);
