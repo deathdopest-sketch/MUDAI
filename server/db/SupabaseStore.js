@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 class SupabaseStore {
   constructor(url, key, logger) {
     this.log = logger;
-    this.db  = createClient(url, key);
+    this.db  = createClient(url.trim(), key.replace(/\s/g, ''));
   }
 
   // ── Characters ──────────────────────────────────────────────────────────────
