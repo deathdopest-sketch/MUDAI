@@ -233,7 +233,7 @@ const ROOMS = {
     name             : 'The Guardian Gate',
     age_min          : 1,
     description      : 'A titanic stone archway carved with the faces of ancient gods — all of them grimacing. The Ancient Guardian stands motionless at its centre, a colossal armoured figure that has not moved in ten thousand years. It is about to move.',
-    exits            : { south: 'bronze_plains' },
+    exits            : { south: 'bronze_plains', north: 'iron_crossroads' },
     safe             : false,
     danger           : 5,
     monster_templates: ['ancient_guardian', 'bronze_golem'],
@@ -243,6 +243,188 @@ const ROOMS = {
       'The carved faces seem to be watching you.',
       'The Guardian\'s armour hums faintly — some ancient power charging.',
       'The temperature drops noticeably. Your breath fogs.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IRON AGE ROOMS (age_min: 2 — locked until world advances to Iron Age)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  iron_crossroads: {
+    id               : 'iron_crossroads',
+    name             : 'The Iron Crossroads',
+    age_min          : 2,
+    description      : 'A wide junction where four roads of hammered iron slag meet. A lone merchant has set up shop at the centre, seemingly unaware of or unconcerned by the war happening in every direction. Smart woman.',
+    exits            : { south: 'guardian_gate', east: 'iron_mines', west: 'battlefield_scarred', north: 'iron_fortress' },
+    safe             : true,
+    danger           : 0,
+    monster_templates: [],
+    max_monsters     : 0,
+    has_shop         : true,
+    ambient          : [
+      'Distant war horns echo across the slag fields.',
+      'The merchant sharpens an iron blade without looking up.',
+      'A riderless horse gallops past from the direction of the battlefield.',
+    ],
+  },
+
+  iron_mines: {
+    id               : 'iron_mines',
+    name             : 'The Iron Mines',
+    age_min          : 2,
+    description      : 'Massive tunnels carved by iron tools into the mountainside. The ore veins still run deep but something else runs deeper — iron wolves that have been down here so long they\'ve gone feral in a new and terrifying direction.',
+    exits            : { west: 'iron_crossroads' },
+    safe             : false,
+    danger           : 2,
+    monster_templates: ['iron_wolf', 'iron_warrior'],
+    max_monsters     : 4,
+    ambient          : [
+      'Iron ore glistens in the tunnel walls.',
+      'A distant howl echoes through the shafts.',
+      'You hear the clang of metal somewhere far below.',
+    ],
+  },
+
+  battlefield_scarred: {
+    id               : 'battlefield_scarred',
+    name             : 'The Scarred Battlefield',
+    age_min          : 2,
+    description      : 'A plain of churned mud and broken iron. Weapons rust where they fell. The battle here ended years ago but nobody told the warriors who keep showing up — iron-clad, enraged, and looking for a fight they never finished.',
+    exits            : { east: 'iron_crossroads', north: 'iron_fortress' },
+    safe             : false,
+    danger           : 3,
+    monster_templates: ['iron_warrior', 'iron_knight'],
+    max_monsters     : 5,
+    ambient          : [
+      'Broken shields litter the ground for as far as you can see.',
+      'An iron warrior rises slowly from the mud ahead of you.',
+      'The wind carries the sound of clashing blades from the north.',
+    ],
+  },
+
+  iron_fortress: {
+    id               : 'iron_fortress',
+    name             : 'The Iron Fortress',
+    age_min          : 2,
+    description      : 'A colossal fortress of iron and volcanic stone. The gates stand open because nothing outside is a threat to what\'s inside. Iron knights patrol every wall with the unhurried confidence of creatures that have never lost.',
+    exits            : { south: 'battlefield_scarred', east: 'volcano_heart', north: 'castle_courtyard' },
+    safe             : false,
+    danger           : 4,
+    monster_templates: ['iron_knight', 'iron_warrior'],
+    max_monsters     : 4,
+    ambient          : [
+      'Iron boots ring against stone floors in the halls above.',
+      'A knight pauses and stares at you from the battlements.',
+      'The forge inside roars to life — something new is being made.',
+    ],
+  },
+
+  volcano_heart: {
+    id               : 'volcano_heart',
+    name             : 'Heart of the Volcano',
+    age_min          : 2,
+    description      : 'The caldera interior where the Iron Colossus was born. Magma rivers glow orange in carved channels. The Colossus stands in the centre like a monument to the terrible idea of making something that big out of iron.',
+    exits            : { west: 'iron_fortress' },
+    safe             : false,
+    danger           : 5,
+    monster_templates: ['iron_colossus', 'iron_knight'],
+    max_monsters     : 2,
+    is_boss_room     : true,
+    ambient          : [
+      'Magma hisses and pops in the channels around you.',
+      'The ground trembles underfoot. Something is moving.',
+      'The heat is almost unbearable. Almost.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MEDIEVAL ROOMS (age_min: 3 — locked until world advances to Medieval)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  castle_courtyard: {
+    id               : 'castle_courtyard',
+    name             : 'Castle Courtyard',
+    age_min          : 3,
+    description      : 'The fortified courtyard of an ancient castle. Pennants hang tattered from the towers. A quartermaster sits at a table near the gate, apparently doing inventory during what looks very much like an active crisis.',
+    exits            : { south: 'iron_fortress', east: 'tournament_arena', west: 'haunted_woods', north: 'dragons_lair' },
+    safe             : true,
+    danger           : 0,
+    monster_templates: [],
+    max_monsters     : 0,
+    has_shop         : true,
+    ambient          : [
+      'Ravens circle the tallest tower.',
+      'A herald tries to announce something but gives up halfway through.',
+      'The drawbridge creaks in the wind.',
+    ],
+  },
+
+  haunted_woods: {
+    id               : 'haunted_woods',
+    name             : 'The Haunted Woods',
+    age_min          : 3,
+    description      : 'Ancient forest where the trees bleed shadow instead of sap. Dark knights patrol between the trunks and wraiths drift silently through the canopy. The forest remembers every person who ever died here. That\'s quite a few.',
+    exits            : { east: 'castle_courtyard', north: 'undead_catacombs' },
+    safe             : false,
+    danger           : 3,
+    monster_templates: ['dark_knight', 'wraith'],
+    max_monsters     : 4,
+    ambient          : [
+      'A branch cracks somewhere in the darkness ahead.',
+      'A wraith drifts past between the trees, ignoring you for now.',
+      'Cold spots move through the air — spirits brushing past.',
+    ],
+  },
+
+  tournament_arena: {
+    id               : 'tournament_arena',
+    name             : 'The Tournament Arena',
+    age_min          : 3,
+    description      : 'A grand circular arena still packed with the bones of audiences long dead. The Tournament Champions train here endlessly — win or lose, they never leave. Some haven\'t left in centuries. They\'re very good now.',
+    exits            : { west: 'castle_courtyard' },
+    safe             : false,
+    danger           : 3,
+    monster_templates: ['tournament_champion', 'dark_knight'],
+    max_monsters     : 3,
+    ambient          : [
+      'The crowd bones rattle faintly in an invisible wind.',
+      'A champion stands at the arena centre, waiting.',
+      'Steel rings against steel somewhere in the practice corridors.',
+    ],
+  },
+
+  undead_catacombs: {
+    id               : 'undead_catacombs',
+    name             : 'The Undead Catacombs',
+    age_min          : 3,
+    description      : 'Miles of tunnels beneath the castle, every wall lined with the dead. Most stay dead. Some don\'t. The Lich Lords who rule here have arranged the bones with disturbing artistic intent — they\'ve had centuries to get it right.',
+    exits            : { south: 'haunted_woods' },
+    safe             : false,
+    danger           : 4,
+    monster_templates: ['lich_lord', 'wraith'],
+    max_monsters     : 4,
+    ambient          : [
+      'Candles burn with green flame in the skull-lined niches.',
+      'A lich lord gestures slowly in a corridor ahead — ritual or greeting, unclear.',
+      'The temperature is absolute zero in all the ways that matter.',
+    ],
+  },
+
+  dragons_lair: {
+    id               : 'dragons_lair',
+    name             : 'The Dragon\'s Lair',
+    age_min          : 3,
+    description      : 'A vast cavern filled floor to ceiling with gold coins, jewels, bones, and the smell of something that breathes fire. The Elder Dragon is coiled at the centre of its hoard, one enormous eye already open. It knew you were coming.',
+    exits            : { south: 'castle_courtyard' },
+    safe             : false,
+    danger           : 5,
+    monster_templates: ['elder_dragon', 'lich_lord'],
+    max_monsters     : 2,
+    is_boss_room     : true,
+    ambient          : [
+      'Gold coins shift and cascade as the dragon shifts its weight.',
+      'One eye opens. It has been watching you since you entered.',
+      'The air shimmers with residual heat and something older than fire.',
     ],
   },
 };

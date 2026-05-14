@@ -50,6 +50,14 @@ const FALLBACKS = {
     "New age, same grubs. The world moves forward whether you lot are ready or not.",
     "Crikey, we made it. From rocks to something slightly better than rocks. Humanity, deadset inspiring.",
   ],
+  custom: [
+    "Crikey, ya think Death's got time to answer every bloody question? I'm very busy, mate — the dead don't sort themselves.",
+    "Strewth, go look it up yourself. The library's second cave on the left, yeah nah it doesn't exist. Fair dinkum.",
+    "Bold of ya to interrupt Death mid-harvest with a question. The answer is: dodgy. Extremely dodgy. Moving on.",
+    "Yeah look, I'd answer but I've got a fresh batch of souls coming in right now. Timing, mate.",
+    "Fair dinkum interesting question. Wrong bloke to ask though — try the dirt, it knows everything eventually.",
+    "I've been doing this job since before time had a name, and somehow that question still stumped me. Crikey.",
+  ],
 };
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -64,11 +72,13 @@ class TheReaper {
       groqKey  : config.groqKey   || null,
       groqModel: config.groqModel || 'llama3-8b-8192',
     };
-    this._mode      = this.config.groqKey ? 'groq' : 'ollama';
-    this.available  = false;
-    this._lastUsed  = 0;
-    this._MIN_GAP   = 9000;
-    this._currentAge = 'Stone Age';
+    this._mode           = this.config.groqKey ? 'groq' : 'ollama';
+    this.available       = false;
+    this._lastUsed       = 0;  // shared by auto-events (kills, deaths, etc.)
+    this._lastManualQuery = 0; // manual 'reaper <question>' command
+    this._MIN_GAP        = 9000;
+    this._MANUAL_GAP     = 4000;
+    this._currentAge     = 'Stone Age';
   }
 
   setAge(ageName) { this._currentAge = ageName; }
@@ -92,8 +102,15 @@ class TheReaper {
   }
 
   async narrate(eventType, context = {}) {
-    if (Date.now() - this._lastUsed < this._MIN_GAP) return null;
-    this._lastUsed = Date.now();
+    const isManual = eventType === 'custom';
+    const now      = Date.now();
+    if (isManual) {
+      if (now - this._lastManualQuery < this._MANUAL_GAP) return pick(FALLBACKS.custom);
+      this._lastManualQuery = now;
+    } else {
+      if (now - this._lastUsed < this._MIN_GAP) return null;
+      this._lastUsed = now;
+    }
 
     if (this.available) {
       try {

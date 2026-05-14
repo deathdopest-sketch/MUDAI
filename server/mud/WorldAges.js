@@ -4,25 +4,25 @@ const AGES = [
   {
     id           : 0,
     name         : 'Stone Age',
-    xp_threshold : 50000,
+    xp_threshold : 5000,
     tagline      : 'Fire was invented last Tuesday. Congrats.',
   },
   {
     id           : 1,
     name         : 'Bronze Age',
-    xp_threshold : 200000,
+    xp_threshold : 25000,
     tagline      : 'Shiny rocks. Sharp shiny rocks.',
   },
   {
     id           : 2,
     name         : 'Iron Age',
-    xp_threshold : 500000,
+    xp_threshold : 75000,
     tagline      : 'Progress hurts. So do swords.',
   },
   {
     id           : 3,
     name         : 'Medieval',
-    xp_threshold : 1200000,
+    xp_threshold : 200000,
     tagline      : 'Plague, knights, and dragons. The full package.',
   },
 ];
@@ -153,10 +153,151 @@ const MONSTER_TEMPLATES = {
     aggro       : false,
     is_boss     : true,
   },
+
+  // ── Iron Age ───────────────────────────────────────────────────────────────
+  iron_wolf: {
+    id          : 'iron_wolf',
+    name        : 'Iron Wolf',
+    age         : 2,
+    description : 'A war-trained wolf fitted with iron plates along its spine. Fast, disciplined, and furious.',
+    hp          : 65,
+    str         : 12,
+    dex         : 10,
+    xp          : 65,
+    gold_min    : 35,
+    gold_max    : 75,
+    loot        : [{ id: 'wolf_pelt', chance: 0.5 }, { id: 'iron_ingot', chance: 0.2 }],
+    respawn_min : 12,
+    aggro       : true,
+  },
+  iron_warrior: {
+    id          : 'iron_warrior',
+    name        : 'Iron Warrior',
+    age         : 2,
+    description : 'A seasoned soldier in battered iron armour. The dents are trophies, not damage.',
+    hp          : 95,
+    str         : 18,
+    dex         : 7,
+    xp          : 105,
+    gold_min    : 55,
+    gold_max    : 100,
+    loot        : [{ id: 'iron_ingot', chance: 0.45 }, { id: 'iron_sword', chance: 0.1 }],
+    respawn_min : 15,
+    aggro       : true,
+  },
+  iron_knight: {
+    id          : 'iron_knight',
+    name        : 'Iron Knight',
+    age         : 2,
+    description : 'A fortress of iron plate striding towards you at speed. Each footstep shakes the ground.',
+    hp          : 140,
+    str         : 24,
+    dex         : 5,
+    xp          : 170,
+    gold_min    : 100,
+    gold_max    : 180,
+    loot        : [{ id: 'iron_ingot', chance: 0.7 }, { id: 'war_hammer', chance: 0.12 }, { id: 'runed_stone', chance: 0.25 }],
+    respawn_min : 30,
+    aggro       : false,
+  },
+  iron_colossus: {
+    id          : 'iron_colossus',
+    name        : 'Iron Colossus',
+    age         : 2,
+    description : 'A monument to iron-age hubris — a golem the size of a house, forged in volcanic heat, cooled in blood. The volcano built it. Now it\'s very much your problem.',
+    hp          : 380,
+    str         : 32,
+    dex         : 3,
+    xp          : 550,
+    gold_min    : 300,
+    gold_max    : 550,
+    loot        : [{ id: 'runed_stone', chance: 0.95 }, { id: 'war_hammer', chance: 0.45 }, { id: 'iron_armor', chance: 0.3 }],
+    respawn_min : 120,
+    aggro       : false,
+    is_boss     : true,
+  },
+
+  // ── Medieval ───────────────────────────────────────────────────────────────
+  dark_knight: {
+    id          : 'dark_knight',
+    name        : 'Dark Knight',
+    age         : 3,
+    description : 'A knight who traded their soul for power and got a fair price. The armour is black, the eyes are worse.',
+    hp          : 115,
+    str         : 20,
+    dex         : 10,
+    xp          : 155,
+    gold_min    : 90,
+    gold_max    : 160,
+    loot        : [{ id: 'dark_crystal', chance: 0.4 }, { id: 'steel_sword', chance: 0.1 }],
+    respawn_min : 18,
+    aggro       : true,
+  },
+  wraith: {
+    id          : 'wraith',
+    name        : 'Wraith',
+    age         : 3,
+    description : 'What\'s left when grief outlasts the body. Barely visible, terrifyingly fast, and deeply resentful of the living.',
+    hp          : 80,
+    str         : 15,
+    dex         : 16,
+    xp          : 135,
+    gold_min    : 70,
+    gold_max    : 130,
+    loot        : [{ id: 'dark_crystal', chance: 0.6 }, { id: 'elder_rune', chance: 0.15 }],
+    respawn_min : 14,
+    aggro       : true,
+  },
+  tournament_champion: {
+    id          : 'tournament_champion',
+    name        : 'Tournament Champion',
+    age         : 3,
+    description : 'Ten years undefeated. Six feet of bored, professional violence looking for a worthy opponent. They will not find one in you, but they\'ll try anyway.',
+    hp          : 175,
+    str         : 28,
+    dex         : 8,
+    xp          : 245,
+    gold_min    : 150,
+    gold_max    : 250,
+    loot        : [{ id: 'dark_crystal', chance: 0.35 }, { id: 'battle_axe', chance: 0.14 }, { id: 'plate_armor', chance: 0.08 }],
+    respawn_min : 35,
+    aggro       : false,
+  },
+  lich_lord: {
+    id          : 'lich_lord',
+    name        : 'Lich Lord',
+    age         : 3,
+    description : 'A sorcerer who refused death so persistently that death eventually became embarrassed and left. He\'s been insufferable ever since.',
+    hp          : 155,
+    str         : 22,
+    dex         : 12,
+    xp          : 275,
+    gold_min    : 140,
+    gold_max    : 260,
+    loot        : [{ id: 'elder_rune', chance: 0.75 }, { id: 'dark_crystal', chance: 0.5 }, { id: 'enchanted_cloak', chance: 0.1 }],
+    respawn_min : 40,
+    aggro       : true,
+  },
+  elder_dragon: {
+    id          : 'elder_dragon',
+    name        : 'Elder Dragon',
+    age         : 3,
+    description : 'Older than the world\'s current name. The scorch marks on every surface within a hundred metres suggest it has been here a while. The piles of gold confirm it is not planning to leave.',
+    hp          : 580,
+    str         : 42,
+    dex         : 8,
+    xp          : 1150,
+    gold_min    : 700,
+    gold_max    : 1200,
+    loot        : [{ id: 'dragon_scale', chance: 0.95 }, { id: 'elder_rune', chance: 0.8 }, { id: 'battle_axe', chance: 0.5 }],
+    respawn_min : 180,
+    aggro       : false,
+    is_boss     : true,
+  },
 };
 
 const ITEM_TEMPLATES = {
-  // Weapons
+  // ── Stone Age weapons ──────────────────────────────────────────────────────
   fists: {
     id: 'fists', name: 'Fists', type: 'weapon', slot: 'weapon',
     damage_min: 1, damage_max: 3, value: 0, age: 0,
@@ -181,7 +322,7 @@ const ITEM_TEMPLATES = {
     damage_min: 2, damage_max: 4, value: 10, age: 0,
     description: 'You sharpened a stick. A start.',
   },
-  // Armor
+  // Stone Age armor
   hide_tunic: {
     id: 'hide_tunic', name: 'Hide Tunic', type: 'armor', slot: 'body',
     defense: 2, value: 40, age: 0,
@@ -197,7 +338,7 @@ const ITEM_TEMPLATES = {
     defense: 8, value: 400, age: 0,
     description: 'Heavy but legendary. Smells incredible (bad).',
   },
-  // Consumables
+  // Stone Age consumables
   dried_meat: {
     id: 'dried_meat', name: 'Dried Meat', type: 'consumable',
     heal: 15, value: 20, age: 0,
@@ -247,6 +388,71 @@ const ITEM_TEMPLATES = {
   boar_tusk    : { id: 'boar_tusk',     name: 'Boar Tusk',      type: 'material', value: 20, age: 1 },
   bronze_shard : { id: 'bronze_shard',  name: 'Bronze Shard',   type: 'material', value: 25, age: 1 },
   ancient_relic: { id: 'ancient_relic', name: 'Ancient Relic',  type: 'material', value: 200, age: 1 },
+
+  // ── Iron Age weapons ───────────────────────────────────────────────────────
+  iron_sword: {
+    id: 'iron_sword', name: 'Iron Sword', type: 'weapon', slot: 'weapon',
+    damage_min: 10, damage_max: 20, value: 450, age: 2,
+    description: 'Forged iron, properly balanced. A serious weapon for serious people.',
+  },
+  war_hammer: {
+    id: 'war_hammer', name: 'War Hammer', type: 'weapon', slot: 'weapon',
+    damage_min: 13, damage_max: 25, value: 550, age: 2,
+    description: 'Heavy, slow, and absolutely devastating. Armour means nothing to this.',
+  },
+  // Iron Age armor
+  iron_armor: {
+    id: 'iron_armor', name: 'Iron Armor', type: 'armor', slot: 'body',
+    defense: 12, value: 450, age: 2,
+    description: 'Full iron plate. Heavy as regret, protective as a mother.',
+  },
+  iron_helm: {
+    id: 'iron_helm', name: 'Iron Helm', type: 'armor', slot: 'head',
+    defense: 6, value: 220, age: 2,
+    description: 'Iron dome for your skull. Dents beautifully.',
+  },
+  // Iron Age consumable
+  health_potion: {
+    id: 'health_potion', name: 'Health Potion', type: 'consumable',
+    heal: 80, value: 80, age: 2,
+    description: 'Red, thick, alarmingly effective. Don\'t ask what\'s in it.',
+  },
+  // Iron Age materials
+  iron_ingot  : { id: 'iron_ingot',   name: 'Iron Ingot',   type: 'material', value: 40,  age: 2 },
+  runed_stone : { id: 'runed_stone',  name: 'Runed Stone',  type: 'material', value: 120, age: 2 },
+
+  // ── Medieval weapons ───────────────────────────────────────────────────────
+  steel_sword: {
+    id: 'steel_sword', name: 'Steel Sword', type: 'weapon', slot: 'weapon',
+    damage_min: 15, damage_max: 28, value: 700, age: 3,
+    description: 'Tempered steel with a master\'s edge. The finest blade short of magic.',
+  },
+  battle_axe: {
+    id: 'battle_axe', name: 'Battle Axe', type: 'weapon', slot: 'weapon',
+    damage_min: 17, damage_max: 32, value: 850, age: 3,
+    description: 'Double-headed, horribly heavy, and absolutely magnificent.',
+  },
+  // Medieval armor
+  plate_armor: {
+    id: 'plate_armor', name: 'Plate Armor', type: 'armor', slot: 'body',
+    defense: 18, value: 800, age: 3,
+    description: 'Full articulated plate. You\'re basically a walking fortress now.',
+  },
+  enchanted_cloak: {
+    id: 'enchanted_cloak', name: 'Enchanted Cloak', type: 'armor', slot: 'body',
+    defense: 10, value: 600, age: 3,
+    description: 'A cloak woven from shadow and spite. Lighter than iron, smarter than wood.',
+  },
+  // Medieval consumable
+  dragon_brew: {
+    id: 'dragon_brew', name: 'Dragon Brew', type: 'consumable',
+    heal: 200, value: 150, age: 3,
+    description: 'Distilled from dragon blood by someone with absolutely no survival instinct.',
+  },
+  // Medieval materials
+  dark_crystal: { id: 'dark_crystal', name: 'Dark Crystal',  type: 'material', value: 180, age: 3 },
+  dragon_scale : { id: 'dragon_scale', name: 'Dragon Scale',  type: 'material', value: 600, age: 3 },
+  elder_rune   : { id: 'elder_rune',   name: 'Elder Rune',    type: 'material', value: 900, age: 3 },
 };
 
 module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES };

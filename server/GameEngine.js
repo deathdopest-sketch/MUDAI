@@ -446,22 +446,45 @@ class GameEngine {
   }
 
   _cmdMap(socket) {
+    const age = this.world.currentAge;
     const lines = [
-      '── Stone Age Map ────────────────────',
+      `── World Map (${this.world.ageName}) ─────────────`,
       '',
-      '     [Rocky Ridge]',
-      '          |',
+      '  STONE AGE:',
+      '    [Rocky Ridge]',
+      '         |',
       '  [Bone Forest]──[Mammoth Plains]──[Ash Fields]',
       '       |               |',
       '  [Cave Mouth]────[Mud Flats]',
       '       |',
       '  [Dark Caves]',
       '       |',
-      '  [Underground River]──[Crystal Cavern]',
-      '',
-      '  ★ Crystal Cavern = Boss Room',
-      '─────────────────────────────────────',
+      '  [Underground River]──[Crystal Cavern★]',
     ];
+    if (age >= 1) {
+      lines.push('');
+      lines.push('  BRONZE AGE (west of Cave Mouth):');
+      lines.push('  [Ancient Ruins$]──[Bronze Plains]──[Tribal Village]');
+      lines.push('          |               |');
+      lines.push('  [Bronze Forge]    [Guardian Gate★]');
+    }
+    if (age >= 2) {
+      lines.push('');
+      lines.push('  IRON AGE (north of Guardian Gate):');
+      lines.push('  [Iron Mines]──[Iron Crossroads$]──[Battlefield]');
+      lines.push('                       |');
+      lines.push('               [Iron Fortress]──[Volcano Heart★]');
+    }
+    if (age >= 3) {
+      lines.push('');
+      lines.push('  MEDIEVAL (north of Iron Fortress):');
+      lines.push('  [Haunted Woods]──[Castle Courtyard$]──[Tournament Arena]');
+      lines.push('         |                  |');
+      lines.push('  [Undead Catacombs]  [Dragon\'s Lair★]');
+    }
+    lines.push('');
+    lines.push('  ★ Boss Room   $ Shop');
+    lines.push('─────────────────────────────────────');
     for (const l of lines) this._feed(socket, 'info', l);
   }
 

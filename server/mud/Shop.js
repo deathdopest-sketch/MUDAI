@@ -27,6 +27,30 @@ const SHOPS = {
       { id: 'cave_mushroom', price: 60  },
     ],
   },
+  iron_crossroads: {
+    npc    : 'Mira the Iron Trader',
+    age_min: 2,
+    stock  : [
+      { id: 'iron_sword',     price: 450 },
+      { id: 'war_hammer',     price: 550 },
+      { id: 'iron_armor',     price: 450 },
+      { id: 'iron_helm',      price: 220 },
+      { id: 'health_potion',  price: 80  },
+      { id: 'cave_mushroom',  price: 60  },
+    ],
+  },
+  castle_courtyard: {
+    npc    : 'Sir Edmund the Quartermaster',
+    age_min: 3,
+    stock  : [
+      { id: 'steel_sword',      price: 700 },
+      { id: 'battle_axe',       price: 850 },
+      { id: 'plate_armor',      price: 800 },
+      { id: 'enchanted_cloak',  price: 600 },
+      { id: 'dragon_brew',      price: 150 },
+      { id: 'health_potion',    price: 80  },
+    ],
+  },
 };
 
 class Shop {
