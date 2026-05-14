@@ -155,6 +155,7 @@ async function main() {
     io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, flood, logger: log,
   });
   io.on('connection', socket => engine.onConnect(socket));
+  engine.startTicks();
 
   // Auto-save world state every 5 minutes
   setInterval(() => worldState.save(), 5 * 60 * 1000);

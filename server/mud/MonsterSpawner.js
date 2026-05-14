@@ -69,11 +69,12 @@ class MonsterSpawner {
     const m = this._monsters.get(instanceId);
     if (!m) return;
     this._monsters.delete(instanceId);
-    // Schedule respawn
-    const room = ROOMS[m.room_id];
+    const tpl = MONSTER_TEMPLATES[m.template_id];
+    // Secret / explore-only monsters don't respawn
+    if (tpl?.no_respawn) return;
+    const room    = ROOMS[m.room_id];
     if (!room) return;
-    const tpl      = MONSTER_TEMPLATES[m.template_id];
-    const delayMs  = (tpl?.respawn_min || 10) * 60 * 1000;
+    const delayMs = (tpl?.respawn_min || 10) * 60 * 1000;
     setTimeout(() => {
       const current = this.getMonstersInRoom(m.room_id).length;
       if (current < (room.max_monsters || 0)) {
@@ -81,6 +82,11 @@ class MonsterSpawner {
         this.log?.debug(`[MonsterSpawner] Respawned ${m.template_id} in ${m.room_id}`);
       }
     }, delayMs);
+  }
+
+  // Spawn an explore-secret monster — bypasses room max_monsters cap
+  spawnForExplore(templateId, roomId) {
+    return this._spawn(templateId, roomId);
   }
 }
 

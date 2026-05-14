@@ -118,6 +118,7 @@ class CharacterManager {
       is_founder  : false,
       founder_lore: null,
       pet         : null,
+      explorations: {},
       created_at  : Date.now(),
       last_seen   : Date.now(),
     };
@@ -166,6 +167,7 @@ class CharacterManager {
       is_founder  : isFounder,
       founder_lore: founderLore,
       pet,
+      explorations: {},
       password_hash,
       last_seen   : Date.now(),
     });
@@ -254,6 +256,9 @@ class CharacterManager {
     if (!char) return { ok: false, msg: 'No character.' };
     const tpl = ITEM_TEMPLATES[itemId];
     if (!tpl?.slot) return { ok: false, msg: 'That cannot be equipped.' };
+    if (tpl.owner && char.username.toLowerCase() !== tpl.owner.toLowerCase()) {
+      return { ok: false, msg: `The ${tpl.name} was made for someone else. It will not move for you.` };
+    }
     if (tpl.founder_only && !char.is_founder) {
       return { ok: false, msg: `The ${tpl.name} resists your grip — it belongs to an earlier world. Perhaps The Reaper knows what to do with it.`, relicHint: true };
     }
@@ -293,7 +298,7 @@ class CharacterManager {
     const k    = username.toLowerCase();
     const char = this._chars[k];
     if (!char) return null;
-    char.hp      = Math.max(1, Math.floor(char.max_hp * 0.3));
+    char.hp      = char.max_hp;
     char.room_id = 'cave_mouth';
     this._persist(k);
     return char;

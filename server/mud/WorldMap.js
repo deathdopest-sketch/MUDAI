@@ -91,7 +91,7 @@ const ROOMS = {
     name             : 'Rocky Ridge',
     age_min          : 0,
     description      : 'A high ridge of jagged rocks with a commanding view of the surrounding land. From here you can see the plains, the forest, and what is very clearly a cave bear den. You\'re already regretting coming up here.',
-    exits            : { east: 'bone_forest' },
+    exits            : { east: 'bone_forest', north: 'ancient_shrine' },
     safe             : false,
     danger           : 2,
     monster_templates: ['cave_bear'],
@@ -108,7 +108,7 @@ const ROOMS = {
     name             : 'Dark Caves',
     age_min          : 0,
     description      : 'Absolute darkness broken only by faint luminescent moss on the walls. The tunnels branch and split everywhere. You hear dripping water and something else that definitely isn\'t water.',
-    exits            : { up: 'cave_mouth', north: 'underground_river' },
+    exits            : { up: 'cave_mouth', north: 'underground_river', west: 'frozen_caves' },
     safe             : false,
     danger           : 2,
     monster_templates: ['cave_rat', 'cave_bear'],
@@ -216,7 +216,7 @@ const ROOMS = {
     name             : 'Tribal Village',
     age_min          : 1,
     description      : 'A fortified settlement of bone and timber. Warriors patrol every entrance. This is absolutely not a welcoming place for outsiders, and every face here confirms it. The smart play is to fight your way through. There is no smart play.',
-    exits            : { west: 'bronze_plains' },
+    exits            : { west: 'bronze_plains', north: 'cursed_temple' },
     safe             : false,
     danger           : 3,
     monster_templates: ['tribal_warrior', 'war_boar'],
@@ -273,7 +273,7 @@ const ROOMS = {
     name             : 'The Iron Mines',
     age_min          : 2,
     description      : 'Massive tunnels carved by iron tools into the mountainside. The ore veins still run deep but something else runs deeper — iron wolves that have been down here so long they\'ve gone feral in a new and terrifying direction.',
-    exits            : { west: 'iron_crossroads' },
+    exits            : { west: 'iron_crossroads', north: 'iron_watchtower' },
     safe             : false,
     danger           : 2,
     monster_templates: ['iron_wolf', 'iron_warrior'],
@@ -398,7 +398,7 @@ const ROOMS = {
     name             : 'The Undead Catacombs',
     age_min          : 3,
     description      : 'Miles of tunnels beneath the castle, every wall lined with the dead. Most stay dead. Some don\'t. The Lich Lords who rule here have arranged the bones with disturbing artistic intent — they\'ve had centuries to get it right.',
-    exits            : { south: 'haunted_woods' },
+    exits            : { south: 'haunted_woods', east: 'royal_crypts' },
     safe             : false,
     danger           : 4,
     monster_templates: ['lich_lord', 'wraith'],
@@ -425,6 +425,107 @@ const ROOMS = {
       'Gold coins shift and cascade as the dragon shifts its weight.',
       'One eye opens. It has been watching you since you entered.',
       'The air shimmers with residual heat and something older than fire.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXTRA STONE AGE ROOMS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  ancient_shrine: {
+    id               : 'ancient_shrine',
+    name             : 'The Ancient Shrine',
+    age_min          : 0,
+    description      : 'A hidden altar carved from a single block of black rock, older than the cave system around it. Offerings of bone and ash sit undisturbed on every surface. Whatever was worshipped here was not worshipped by anything human.',
+    exits            : { south: 'rocky_ridge' },
+    safe             : false,
+    danger           : 3,
+    monster_templates: ['cave_ancestor'],
+    max_monsters     : 2,
+    ambient          : [
+      'The offerings on the altar shift slightly, though there is no wind.',
+      'A deep resonance emanates from the black stone. Not quite a sound.',
+      'You feel observed in the way prey feels observed.',
+    ],
+  },
+
+  frozen_caves: {
+    id               : 'frozen_caves',
+    name             : 'The Frozen Caves',
+    age_min          : 0,
+    description      : 'A side passage from the dark caves that drops ten degrees in temperature. Ice formations cover every wall in branching crystalline patterns. The cold is not natural — it started somewhere deeper and hasn\'t stopped.',
+    exits            : { east: 'dark_caves' },
+    safe             : false,
+    danger           : 3,
+    monster_templates: ['frost_wolf', 'cave_bear'],
+    max_monsters     : 4,
+    ambient          : [
+      'Your breath fogs immediately.',
+      'Ice groans and cracks somewhere in the dark ahead.',
+      'Frost wolf tracks cross the floor — recent, and large.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXTRA BRONZE AGE ROOM
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  cursed_temple: {
+    id               : 'cursed_temple',
+    name             : 'The Cursed Temple',
+    age_min          : 1,
+    description      : 'A temple carved into a sheer cliff face, every surface covered in warnings in languages that predate writing. The Tribal High Priests here can\'t read them either, but they\'ve intuited the general sentiment and run the place accordingly.',
+    exits            : { south: 'tribal_village' },
+    safe             : false,
+    danger           : 4,
+    monster_templates: ['tribal_high_priest'],
+    max_monsters     : 3,
+    ambient          : [
+      'The symbols on the walls seem to rearrange when you\'re not looking directly at them.',
+      'A deep rhythmic chanting starts and stops abruptly.',
+      'The torches here burn an unsettling shade of green.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXTRA IRON AGE ROOM
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  iron_watchtower: {
+    id               : 'iron_watchtower',
+    name             : 'The Iron Watchtower',
+    age_min          : 2,
+    description      : 'A tower of solid iron rising above the mineshafts. From the top floor you can see every zone of the Iron Age spread below you — and the Iron Sentinels marching up the stairs toward you with the focused energy of people who have been waiting for exactly this.',
+    exits            : { south: 'iron_mines' },
+    safe             : false,
+    danger           : 4,
+    monster_templates: ['iron_sentinel', 'iron_knight'],
+    max_monsters     : 3,
+    ambient          : [
+      'The iron walls groan in the wind with a sound like a trapped voice.',
+      'You can see the whole Iron Age from here. It\'s mostly on fire.',
+      'Heavy footsteps echo up the stairwell from below.',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXTRA MEDIEVAL ROOM
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  royal_crypts: {
+    id               : 'royal_crypts',
+    name             : 'The Royal Crypts',
+    age_min          : 3,
+    description      : 'The sealed vaults of an ancient royal line. Every stone coffin has been opened from the inside. The Royal Lich who rules here considers this an upgrade to the previous arrangement and is not open to alternative perspectives.',
+    exits            : { west: 'undead_catacombs' },
+    safe             : false,
+    danger           : 5,
+    monster_templates: ['royal_lich', 'lich_lord'],
+    max_monsters     : 3,
+    ambient          : [
+      'A crown rolls slowly across the floor and stops at your feet.',
+      'The Royal Lich addresses you formally, by the wrong name.',
+      'Coffin lids shift in their frames as something tests them from inside.',
     ],
   },
 };

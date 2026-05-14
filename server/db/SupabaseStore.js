@@ -33,6 +33,7 @@ class SupabaseStore {
       is_founder   : row.is_founder   || false,
       founder_lore : row.founder_lore || null,
       pet          : row.pet          || null,
+      explorations : row.explorations || {},
       created_at   : new Date(row.created_at).getTime(),
       last_seen    : new Date(row.last_seen).getTime(),
     };
@@ -56,9 +57,10 @@ class SupabaseStore {
       kills    : char.kills,
       deaths   : char.deaths,
       gold        : char.gold || 0,
-      is_founder  : char.is_founder  || false,
+      is_founder  : char.is_founder   || false,
       founder_lore: char.founder_lore || null,
       pet         : char.pet          || null,
+      explorations: char.explorations || {},
       last_seen   : new Date(char.last_seen || Date.now()).toISOString(),
       ...(char.password_hash ? { password_hash: char.password_hash } : {}),
     };

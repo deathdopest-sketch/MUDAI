@@ -6,6 +6,9 @@ const { AGES, ITEM_TEMPLATES }   = require('./mud/WorldAges');
 const { Shop }                   = require('./mud/Shop');
 const CommandParser              = require('./CommandParser');
 const GoldBridge                 = require('./economy/GoldBridge');
+const ExploreData                = require('./mud/ExploreData');
+
+const DEATH_SCYTHES = ['stone_scythe', 'bronze_scythe', 'iron_scythe', 'reapers_scythe'];
 
 const OPPOSITES = { north: 'south', south: 'north', east: 'west', west: 'east', up: 'down', down: 'up' };
 
@@ -154,6 +157,7 @@ class GameEngine {
       this._feed(socket, 'reaper', `The Reaper: "Another fresh one. Crikey, they get stupider every age."`);
     }
 
+    this._checkDeathSpecials(username);
     this.log?.info(`[GameEngine] ${username} auth OK (${isNew ? 'new' : 'returning'})`);
   }
 
@@ -204,6 +208,7 @@ class GameEngine {
       case 'help':      return this._cmdHelp(socket);
       case 'reaper':    return this._cmdReaper(socket, username, args.join(' '));
       case 'trade':     return this._cmdTrade(socket, username, args.join(' '));
+      case 'explore':   return this._cmdExplore(socket, username);
       case 'unknown':
         this._feed(socket, 'error', `Unknown command. Type 'help' for a list.`);
     }
@@ -592,6 +597,7 @@ class GameEngine {
       '  top                  Leaderboard',
       '  reaper <question>    Consult death',
       '  trade reaper         Trade with The Reaper',
+      '  explore              Search the room (once per day)',
       '──────────────────────────────────────',
     ];
     for (const l of lines) this._feed(socket, 'help', l);
@@ -637,6 +643,104 @@ class GameEngine {
       `A ${rewardTpl?.name} appears in its place. "Best I've got for this age. Fair dinkum."`
     );
     socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+  }
+
+  async _cmdExplore(socket, username) {
+    const char = this.chars.get(username);
+    if (!char) return;
+    const room = ROOMS[char.room_id];
+    if (!room) return;
+
+    const today        = new Date().toISOString().slice(0, 10);
+    const explorations = char.explorations || {};
+    if (explorations[char.room_id] === today) {
+      this._feed(socket, 'error', `You've already searched this room today. The dust settles back. Come back tomorrow.`);
+      return;
+    }
+
+    this.chars.update(username, { explorations: { ...explorations, [char.room_id]: today } });
+
+    const danger  = room.danger  || 0;
+    const isSafe  = room.is_safe || false;
+    const ageMin  = room.age_min || 0;
+    const outcome = ExploreData.rollOutcome(danger, isSafe);
+
+    this._feed(socket, 'info', `🔍 You search the ${room.name}...`);
+
+    if (outcome === 'item') {
+      const pool   = ExploreData.EXPLORE_ITEM_POOLS[Math.min(ageMin, 3)] || ExploreData.EXPLORE_ITEM_POOLS[0];
+      const itemId = ExploreData.weightedPick(pool);
+      const tpl    = ITEM_TEMPLATES[itemId];
+      this.chars.addItem(username, itemId, 1);
+      this._feed(socket, 'loot', `You find: ${tpl?.name || itemId}!`);
+      socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+
+    } else if (outcome === 'gold') {
+      const base   = (danger + 1) * 8;
+      const amount = Math.floor(base + Math.random() * base * 2);
+      this.gold.award(username, amount);
+      this._feed(socket, 'loot', `You find ${GoldBridge.fmt(amount)} in forgotten coin tucked in a crevice!`);
+      socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+
+    } else if (outcome === 'enemy') {
+      const secretId = ExploreData.SECRET_ENEMIES[Math.min(ageMin, 3)];
+      const m        = this.spawner.spawnForExplore(secretId, char.room_id);
+      if (m) {
+        this._feed(socket, 'combat', `⚠ Something lunges from the shadows — the ${m.name} attacks!`);
+        this._roomBroadcast(char.room_id, 'room_info', { text: `👁 ${char.name} disturbs something lurking in the dark!` }, socket.id);
+        this._broadcastRoomData(char.room_id);
+      } else {
+        this._feed(socket, 'info', ExploreData.pick(ExploreData.EXPLORE_NOTHING));
+      }
+
+    } else if (outcome === 'lore') {
+      this._feed(socket, 'reaper', `💀 ${ExploreData.pick(ExploreData.EXPLORE_LORE)}`);
+
+    } else {
+      this._feed(socket, 'info', ExploreData.pick(ExploreData.EXPLORE_NOTHING));
+    }
+  }
+
+  _checkDeathSpecials(username) {
+    if (username.toLowerCase() !== 'death') return;
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    // Void pet
+    if (!char.inventory.find(i => i.id === 'void_pet')) {
+      this.chars.addItem(username, 'void_pet', 1);
+    }
+    if (char.pet !== 'void_pet') {
+      this.chars.update(username, { pet: 'void_pet' });
+    }
+
+    // Age-correct scythe — remove wrong ones, ensure right one exists
+    const scytheMap = { 0: 'stone_scythe', 1: 'bronze_scythe', 2: 'iron_scythe', 3: 'reapers_scythe' };
+    const correct   = scytheMap[this.world.currentAge] || 'stone_scythe';
+    for (const s of DEATH_SCYTHES) {
+      if (s !== correct) {
+        const c = this.chars.get(username);
+        if (c?.inventory.find(i => i.id === s)) this.chars.removeItem(username, s, 1);
+      }
+    }
+    const fresh = this.chars.get(username);
+    if (fresh && !fresh.inventory.find(i => i.id === correct)) {
+      this.chars.addItem(username, correct, 1);
+    }
+  }
+
+  startTicks() {
+    // Void pet: passively heal Death by 2 HP every 30 seconds while online
+    setInterval(() => {
+      const char = this.chars.get('death');
+      if (!char || char.pet !== 'void_pet' || char.hp >= char.max_hp) return;
+      const healed = this.chars.heal('death', 2);
+      if (healed <= 0) return;
+      const sess = this.sessions.getByUser('death');
+      if (!sess) return;
+      const sock = this.io.sockets.sockets.get(sess.socketId);
+      if (sock) sock.emit('char_update', this._clientChar(this.chars.get('death'), 'death'));
+    }, 30_000);
   }
 
   // ── Room helpers ──────────────────────────────────────────────────────────
@@ -724,6 +828,7 @@ class GameEngine {
     this.world.collectiveXp = 0;
     this.world.save?.();
     this.reaper.setAge(this.world.ageName);
+    this._checkDeathSpecials('death');
 
     this.io.emit('feed', { type: 'age_transition', text: `🌍 THE WORLD ADVANCES! The ${oldAge} is over. Welcome to the ${this.world.ageName}.` });
     const line = await this.reaper.narrate('age_transition', { fromAge: oldAge, toAge: this.world.ageName });

@@ -181,7 +181,9 @@ function renderChar(char) {
     : '';
   const petLine = char.pet === 'flood_wraith'
     ? `<div class="char-pet">👻 Flood Wraith follows you.</div>`
-    : '';
+    : char.pet === 'void_pet'
+      ? `<div class="char-pet">🌑 The Void seeps around you. You feel it mending your wounds.</div>`
+      : '';
 
   charDisplay.innerHTML = `
     <div class="char-name">${esc(char.name)}${founderBadge}</div>
