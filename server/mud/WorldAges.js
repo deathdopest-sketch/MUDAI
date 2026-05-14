@@ -85,7 +85,7 @@ const MONSTER_TEMPLATES = {
     xp          : 220,
     gold_min    : 90,
     gold_max    : 200,
-    loot        : [{ id: 'mammoth_hide', chance: 0.9 }, { id: 'mammoth_tusk', chance: 0.6 }],
+    loot        : [{ id: 'mammoth_hide', chance: 0.9 }, { id: 'mammoth_tusk', chance: 0.6 }, { id: 'flood_blade', chance: 0.015 }],
     respawn_min : 60,
     aggro       : false,
     is_boss     : true,
@@ -148,7 +148,7 @@ const MONSTER_TEMPLATES = {
     xp          : 350,
     gold_min    : 175,
     gold_max    : 350,
-    loot        : [{ id: 'ancient_relic', chance: 0.95 }, { id: 'bronze_sword', chance: 0.5 }],
+    loot        : [{ id: 'ancient_relic', chance: 0.95 }, { id: 'bronze_sword', chance: 0.5 }, { id: 'flood_blade', chance: 0.02 }, { id: 'before_time_armor', chance: 0.02 }],
     respawn_min : 90,
     aggro       : false,
     is_boss     : true,
@@ -211,7 +211,7 @@ const MONSTER_TEMPLATES = {
     xp          : 550,
     gold_min    : 300,
     gold_max    : 550,
-    loot        : [{ id: 'runed_stone', chance: 0.95 }, { id: 'war_hammer', chance: 0.45 }, { id: 'iron_armor', chance: 0.3 }],
+    loot        : [{ id: 'runed_stone', chance: 0.95 }, { id: 'war_hammer', chance: 0.45 }, { id: 'iron_armor', chance: 0.3 }, { id: 'before_time_armor', chance: 0.025 }],
     respawn_min : 120,
     aggro       : false,
     is_boss     : true,
@@ -289,7 +289,7 @@ const MONSTER_TEMPLATES = {
     xp          : 1150,
     gold_min    : 700,
     gold_max    : 1200,
-    loot        : [{ id: 'dragon_scale', chance: 0.95 }, { id: 'elder_rune', chance: 0.8 }, { id: 'battle_axe', chance: 0.5 }],
+    loot        : [{ id: 'dragon_scale', chance: 0.95 }, { id: 'elder_rune', chance: 0.8 }, { id: 'battle_axe', chance: 0.5 }, { id: 'flood_blade', chance: 0.04 }, { id: 'before_time_armor', chance: 0.04 }],
     respawn_min : 180,
     aggro       : false,
     is_boss     : true,
@@ -453,6 +453,28 @@ const ITEM_TEMPLATES = {
   dark_crystal: { id: 'dark_crystal', name: 'Dark Crystal',  type: 'material', value: 180, age: 3 },
   dragon_scale : { id: 'dragon_scale', name: 'Dragon Scale',  type: 'material', value: 600, age: 3 },
   elder_rune   : { id: 'elder_rune',   name: 'Elder Rune',    type: 'material', value: 900, age: 3 },
+
+  // ── Flood Relics (pre-dates all ages — founder-only equippable) ─────────────
+  flood_blade: {
+    id: 'flood_blade', name: 'The Flood Blade', type: 'weapon', slot: 'weapon',
+    damage_min: 25, damage_max: 45, value: 0, age: 0,
+    founder_only: true,
+    cannot_drop : true,
+    description: 'Forged before the first flood. It remembers every world. Non-founders feel it resist their grip.',
+  },
+  before_time_armor: {
+    id: 'before_time_armor', name: 'Armour of the Before-Time', type: 'armor', slot: 'body',
+    defense: 25, value: 0, age: 0,
+    founder_only: true,
+    cannot_drop : true,
+    description: 'Hammered from the bones of the old world. Pre-dates the current age. Non-founders cannot wear it.',
+  },
+  flood_wraith: {
+    id: 'flood_wraith', name: 'Flood Wraith', type: 'pet', slot: null,
+    value: 0, age: 0,
+    cannot_drop : true,
+    description: 'The ghost of your old Stone Age companion, following you through the reset. Loyal beyond death.',
+  },
 };
 
 module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES };

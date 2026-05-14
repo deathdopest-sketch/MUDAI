@@ -9,8 +9,12 @@ const GoldBridge                 = require('./economy/GoldBridge');
 
 const OPPOSITES = { north: 'south', south: 'north', east: 'west', west: 'east', up: 'down', down: 'up' };
 
+// Best item reward when a non-founder trades a relic to The Reaper
+const RELIC_TRADE_WEAPON = { 0: 'stone_axe', 1: 'iron_spear',  2: 'war_hammer', 3: 'battle_axe' };
+const RELIC_TRADE_ARMOR  = { 0: 'hide_tunic', 1: 'leather_armor', 2: 'iron_armor', 3: 'plate_armor' };
+
 class GameEngine {
-  constructor({ io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, logger }) {
+  constructor({ io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, flood, logger }) {
     this.io        = io;
     this.chars     = chars;
     this.spawner   = spawner;
@@ -20,6 +24,7 @@ class GameEngine {
     this.gold      = gold;
     this.world     = worldState;
     this.announcer = announcer;
+    this.flood     = flood;
     this.log       = logger;
     this.parser    = new CommandParser();
     this.shop      = new Shop(chars, gold, logger);
@@ -72,6 +77,8 @@ class GameEngine {
     if (!username) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
     const safeName = (charName || username).trim().replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 20) || username;
     this.chars.create(username, safeName);
+    // Check flood threshold whenever a new player registers
+    this.flood?.check();
     // Don't enter the world yet — ask them to set a password first
     socket._pendingAuth = { username, isNew: true };
     socket.emit('needs_password_create', { username, isNew: true });
@@ -196,6 +203,7 @@ class GameEngine {
       case 'top':       return this._cmdTop(socket);
       case 'help':      return this._cmdHelp(socket);
       case 'reaper':    return this._cmdReaper(socket, username, args.join(' '));
+      case 'trade':     return this._cmdTrade(socket, username, args.join(' '));
       case 'unknown':
         this._feed(socket, 'error', `Unknown command. Type 'help' for a list.`);
     }
@@ -315,6 +323,11 @@ class GameEngine {
         });
         if (line) this._roomBroadcast(char.room_id, 'reaper', { text: `💀 The Reaper: "${line}"` });
       }
+      // Occasionally, The Reaper surfaces a memory of a founder (8% chance)
+      const memory = this.reaper.getFounderMemoryLine();
+      if (memory) {
+        this._roomBroadcast(char.room_id, 'reaper', { text: `💀 The Reaper: "${memory}"` });
+      }
       this._broadcastRoomData(char.room_id);
       // Advance world XP
       this.world.collectiveXp += res.xpGained;
@@ -399,7 +412,9 @@ class GameEngine {
     const item = char.inventory.find(i => !i.equipped && (ITEM_TEMPLATES[i.id]?.name || i.id).toLowerCase().includes(q));
     if (!item) { this._feed(socket, 'error', `You don't have "${query}" unequipped.`); return; }
     const result = this.chars.equipItem(username, item.id);
-    this._feed(socket, result.ok ? 'info' : 'error', result.msg);
+    // Use 'reaper' type for the relic hint to make it feel mysterious
+    const feedType = result.relicHint ? 'reaper' : (result.ok ? 'info' : 'error');
+    this._feed(socket, feedType, result.msg);
     if (result.ok) socket.emit('char_update', this._clientChar(this.chars.get(username), username));
   }
 
@@ -576,6 +591,7 @@ class GameEngine {
       '  sell <item>          Sell an item',
       '  top                  Leaderboard',
       '  reaper <question>    Consult death',
+      '  trade reaper         Trade with The Reaper',
       '──────────────────────────────────────',
     ];
     for (const l of lines) this._feed(socket, 'help', l);
@@ -587,6 +603,40 @@ class GameEngine {
     this._feed(socket, 'system', 'The Reaper stirs...');
     const line = await this.reaper.narrate('custom', { question, playerName: char?.name || username });
     this._feed(socket, 'reaper', `💀 The Reaper: "${line || "Can't hear ya, mate. Too many souls queued up."}"`);
+  }
+
+  _cmdTrade(socket, username, args) {
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    const RELICS = ['flood_blade', 'before_time_armor'];
+    const relic  = char.inventory.find(i => RELICS.includes(i.id) && !i.equipped);
+
+    if (!relic) {
+      this._feed(socket, 'error', `The Reaper has nothing to offer someone with nothing to give.`);
+      return;
+    }
+
+    if (char.is_founder) {
+      this._feed(socket, 'info', `The Reaper eyes you. "That belongs to you already, Founder. Keep it."`);
+      return;
+    }
+
+    // Non-founder trades relic for the current-age best weapon or armor
+    const isWeapon   = relic.id === 'flood_blade';
+    const rewardId   = isWeapon
+      ? (RELIC_TRADE_WEAPON[this.world.currentAge] || 'stone_axe')
+      : (RELIC_TRADE_ARMOR[this.world.currentAge]  || 'hide_tunic');
+    const rewardTpl  = require('./mud/WorldAges').ITEM_TEMPLATES[rewardId];
+
+    this.chars.removeItem(username, relic.id, 1);
+    this.chars.addItem(username, rewardId, 1);
+
+    this._feed(socket, 'reaper',
+      `💀 The Reaper takes the ${require('./mud/WorldAges').ITEM_TEMPLATES[relic.id]?.name} without a word. ` +
+      `A ${rewardTpl?.name} appears in its place. "Best I've got for this age. Fair dinkum."`
+    );
+    socket.emit('char_update', this._clientChar(this.chars.get(username), username));
   }
 
   // ── Room helpers ──────────────────────────────────────────────────────────
@@ -693,20 +743,22 @@ class GameEngine {
     if (!char) return null;
     return {
       username,
-      name     : char.name,
-      level    : char.level,
-      xp       : char.xp,
-      xp_next  : char.xp_next,
-      hp       : char.hp,
-      max_hp   : char.max_hp,
-      str      : char.str,
-      dex      : char.dex,
-      con      : char.con,
-      kills    : char.kills,
-      deaths   : char.deaths,
-      room_id  : char.room_id,
-      gold     : this.gold.balance(username),
-      inventory: char.inventory,
+      name      : char.name,
+      level     : char.level,
+      xp        : char.xp,
+      xp_next   : char.xp_next,
+      hp        : char.hp,
+      max_hp    : char.max_hp,
+      str       : char.str,
+      dex       : char.dex,
+      con       : char.con,
+      kills     : char.kills,
+      deaths    : char.deaths,
+      room_id   : char.room_id,
+      gold      : this.gold.balance(username),
+      inventory : char.inventory,
+      is_founder: char.is_founder || false,
+      pet       : char.pet        || null,
     };
   }
 }

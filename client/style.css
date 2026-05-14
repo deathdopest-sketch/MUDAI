@@ -305,6 +305,29 @@ html, body {
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+/* Founder badge */
+.founder-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #00cfff;
+  border: 1px solid #00cfff55;
+  border-radius: 3px;
+  background: #001f2a;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+.char-pet {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--reaper);
+  opacity: 0.8;
+}
+
 /* Scanline overlay */
 #game::before {
   content: '';

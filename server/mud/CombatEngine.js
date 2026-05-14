@@ -58,11 +58,14 @@ class CombatEngine {
         this._active.delete(username.toLowerCase());
         this.spawner.removeMonster(monsterInstanceId);
 
-        const xpResult      = this.chars.awardXp(username, tpl.xp);
-        result.xpGained     = tpl.xp;
-        result.levelUp      = xpResult?.levelled || false;
-        result.goldGained   = rand(tpl.gold_min, tpl.gold_max);
-        result.loot         = [];
+        const baseXp      = tpl.xp;
+        const baseGold    = rand(tpl.gold_min, tpl.gold_max);
+        const isFounder   = this.chars.get(username)?.is_founder || false;
+        result.xpGained   = isFounder ? Math.floor(baseXp   * 1.10) : baseXp;
+        result.goldGained = isFounder ? Math.floor(baseGold * 1.15) : baseGold;
+        const xpResult    = this.chars.awardXp(username, result.xpGained);
+        result.levelUp    = xpResult?.levelled || false;
+        result.loot       = [];
         this.gold.award(username, result.goldGained);
 
         for (const drop of (tpl.loot || [])) {

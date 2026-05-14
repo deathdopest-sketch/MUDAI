@@ -12,6 +12,7 @@ const CharacterManager = require('./mud/CharacterManager');
 const MonsterSpawner   = require('./mud/MonsterSpawner');
 const CombatEngine     = require('./mud/CombatEngine');
 const TheReaper        = require('./mud/TheReaper');
+const FloodSystem      = require('./mud/FloodSystem');
 const SessionManager   = require('./SessionManager');
 const GoldBridge       = require('./economy/GoldBridge');
 const MudAnnouncer     = require('./MudAnnouncer');
@@ -104,6 +105,10 @@ async function main() {
   reaper.checkAvailable();
   reaper.setAge(worldState.ageName);
 
+  // Reload any founder lore from previous floods into The Reaper's memory
+  const founderMemories = chars.getAllFounderLore();
+  if (founderMemories.length) reaper.setFounderMemories(founderMemories);
+
   // ── HTTP server ─────────────────────────────────────────────────────────────
   const app    = express();
   const server = http.createServer(app);
@@ -144,8 +149,10 @@ async function main() {
     }
   });
 
+  const flood  = new FloodSystem({ chars, worldState, reaper, io, logger: log });
+
   const engine = new GameEngine({
-    io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, logger: log,
+    io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, flood, logger: log,
   });
   io.on('connection', socket => engine.onConnect(socket));
 

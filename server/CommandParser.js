@@ -33,6 +33,8 @@ const ALIASES = {
   help: 'help', '?': 'help', h: 'help',
   // reaper
   reaper: 'reaper', ask: 'reaper',
+  // trade relic with reaper
+  trade: 'trade',
   // flee
   flee: 'flee', escape: 'flee',
   // world age

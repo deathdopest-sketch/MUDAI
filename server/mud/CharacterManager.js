@@ -100,27 +100,88 @@ class CharacterManager {
     const con = 5;
     const char = {
       username,
-      name     : charName,
-      level    : 1,
-      xp       : 0,
-      xp_next  : xpForNextLevel(1),
-      hp       : calcMaxHp(1, con),
-      max_hp   : calcMaxHp(1, con),
-      str      : 5,
-      dex      : 5,
+      name        : charName,
+      level       : 1,
+      xp          : 0,
+      xp_next     : xpForNextLevel(1),
+      hp          : calcMaxHp(1, con),
+      max_hp      : calcMaxHp(1, con),
+      str         : 5,
+      dex         : 5,
       con,
-      room_id  : 'cave_mouth',
-      age_born : 0,
-      inventory: JSON.parse(JSON.stringify(STARTING_ITEMS)),
-      kills    : 0,
-      deaths   : 0,
-      gold     : 0,
-      created_at: Date.now(),
-      last_seen : Date.now(),
+      room_id     : 'cave_mouth',
+      age_born    : 0,
+      inventory   : JSON.parse(JSON.stringify(STARTING_ITEMS)),
+      kills       : 0,
+      deaths      : 0,
+      gold        : 0,
+      is_founder  : false,
+      founder_lore: null,
+      pet         : null,
+      created_at  : Date.now(),
+      last_seen   : Date.now(),
     };
     this._chars[k] = char;
     this._persist(k);
     return char;
+  }
+
+  // Called by FloodSystem — wipes all progress but keeps gold, founder status, and password
+  floodReset(username) {
+    const k    = username.toLowerCase();
+    const char = this._chars[k];
+    if (!char) return null;
+
+    const isFounder  = char.is_founder  || false;
+    const founderLore = char.founder_lore || null;
+    const gold       = char.gold        || 0;
+    const password_hash = char.password_hash || null;
+    const pet        = isFounder ? 'flood_wraith' : null;
+
+    // Founders get +3 to all base stats as a permanent perk
+    const str = isFounder ? 8 : 5;
+    const dex = isFounder ? 8 : 5;
+    const con = isFounder ? 8 : 5;
+
+    const inv = JSON.parse(JSON.stringify(STARTING_ITEMS));
+    if (isFounder) {
+      inv.push({ id: 'flood_wraith',       equipped: false, slot: null,     quantity: 1 });
+      inv.push({ id: 'flood_blade',        equipped: false, slot: 'weapon', quantity: 1 });
+      inv.push({ id: 'before_time_armor',  equipped: false, slot: 'body',   quantity: 1 });
+    }
+
+    Object.assign(char, {
+      level       : 1,
+      xp          : 0,
+      xp_next     : xpForNextLevel(1),
+      hp          : calcMaxHp(1, con),
+      max_hp      : calcMaxHp(1, con),
+      str, dex, con,
+      room_id     : 'cave_mouth',
+      age_born    : 0,
+      inventory   : inv,
+      kills       : 0,
+      deaths      : 0,
+      gold,
+      is_founder  : isFounder,
+      founder_lore: founderLore,
+      pet,
+      password_hash,
+      last_seen   : Date.now(),
+    });
+
+    this._persist(k);
+    return char;
+  }
+
+  allUsernames() {
+    return Object.keys(this._chars);
+  }
+
+  getAllFounderLore() {
+    return Object.values(this._chars)
+      .filter(c => c.is_founder && c.founder_lore)
+      .map(c => c.founder_lore);
   }
 
   update(username, changes) {
@@ -193,6 +254,9 @@ class CharacterManager {
     if (!char) return { ok: false, msg: 'No character.' };
     const tpl = ITEM_TEMPLATES[itemId];
     if (!tpl?.slot) return { ok: false, msg: 'That cannot be equipped.' };
+    if (tpl.founder_only && !char.is_founder) {
+      return { ok: false, msg: `The ${tpl.name} resists your grip — it belongs to an earlier world. Perhaps The Reaper knows what to do with it.`, relicHint: true };
+    }
     const invItem = char.inventory.find(i => i.id === itemId && !i.equipped);
     if (!invItem) return { ok: false, msg: "You don't have that unequipped." };
     char.inventory.forEach(i => {

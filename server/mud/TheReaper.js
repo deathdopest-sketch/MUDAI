@@ -72,16 +72,29 @@ class TheReaper {
       groqKey  : config.groqKey   || null,
       groqModel: config.groqModel || 'llama3-8b-8192',
     };
-    this._mode           = this.config.groqKey ? 'groq' : 'ollama';
-    this.available       = false;
-    this._lastUsed       = 0;  // shared by auto-events (kills, deaths, etc.)
-    this._lastManualQuery = 0; // manual 'reaper <question>' command
-    this._MIN_GAP        = 9000;
-    this._MANUAL_GAP     = 4000;
-    this._currentAge     = 'Stone Age';
+    this._mode            = this.config.groqKey ? 'groq' : 'ollama';
+    this.available        = false;
+    this._lastUsed        = 0;
+    this._lastManualQuery = 0;
+    this._MIN_GAP         = 9000;
+    this._MANUAL_GAP      = 4000;
+    this._currentAge      = 'Stone Age';
+    this._founderMemories = [];
   }
 
   setAge(ageName) { this._currentAge = ageName; }
+
+  setFounderMemories(loreArray) {
+    this._founderMemories = (loreArray || []).filter(Boolean);
+  }
+
+  // Returns a random founder memory line 8% of the time (only if memories exist)
+  getFounderMemoryLine() {
+    if (!this._founderMemories.length) return null;
+    if (Math.random() > 0.08) return null;
+    const lore = this._founderMemories[Math.floor(Math.random() * this._founderMemories.length)];
+    return `Before the flood... ${lore}`;
+  }
 
   async checkAvailable() {
     if (this._mode === 'groq') {

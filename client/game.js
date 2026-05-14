@@ -176,8 +176,15 @@ function renderChar(char) {
   // XP bar
   const xpPct = Math.max(0, Math.min(100, (char.xp / char.xp_next) * 100));
 
+  const founderBadge = char.is_founder
+    ? `<span class="founder-badge" title="Survived the Great Flood">🌊 FOUNDER</span>`
+    : '';
+  const petLine = char.pet === 'flood_wraith'
+    ? `<div class="char-pet">👻 Flood Wraith follows you.</div>`
+    : '';
+
   charDisplay.innerHTML = `
-    <div class="char-name">${esc(char.name)}</div>
+    <div class="char-name">${esc(char.name)}${founderBadge}</div>
     <div class="char-level dim">Level ${char.level}</div>
     <div style="margin-top:8px">
       <div class="stat-bar-wrap">
@@ -194,6 +201,7 @@ function renderChar(char) {
     <div class="char-stats-row">STR ${char.str} · DEX ${char.dex} · CON ${char.con}</div>
     <div class="char-gold">💰 ${fmtGold(char.gold)}</div>
     <div class="char-kills dim">${char.kills} kills · ${char.deaths} deaths</div>
+    ${petLine}
   `;
 
   renderInventory(char.inventory || []);
