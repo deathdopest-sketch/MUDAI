@@ -15,6 +15,8 @@ class SupabaseStore {
     return {
       username  : row.username,
       name      : row.name,
+      race      : row.race      || 'homo_sapien',
+      sex       : row.sex       || 'male',
       level     : row.level,
       xp        : row.xp,
       xp_next   : row.xp_next,
@@ -43,6 +45,8 @@ class SupabaseStore {
     return {
       username : char.username.toLowerCase(),
       name     : char.name,
+      race     : char.race || 'homo_sapien',
+      sex      : char.sex  || 'male',
       level    : char.level,
       xp       : char.xp,
       xp_next  : char.xp_next,

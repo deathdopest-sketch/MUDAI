@@ -30,9 +30,74 @@
 <!-- ── Char create overlay ──────────────────────────────── -->
 <div id="char-overlay" style="display:none">
   <div id="char-box">
-    <p id="char-intro">New soul detected. Name your caveman.</p>
-    <input id="char-input" type="text" placeholder="Character name..." maxlength="20" autocomplete="off" spellcheck="false">
-    <button id="char-btn">BEGIN</button>
+
+    <!-- Step 1: Name -->
+    <div id="char-step-name">
+      <p class="char-step-label">STEP 1 OF 3 — NAME YOUR CHARACTER</p>
+      <p class="char-step-sub">New soul detected. Give it a name.</p>
+      <input id="char-input" type="text" placeholder="Character name..." maxlength="20" autocomplete="off" spellcheck="false">
+      <button id="char-name-btn">NEXT →</button>
+    </div>
+
+    <!-- Step 2: Race -->
+    <div id="char-step-race" style="display:none">
+      <p class="char-step-label">STEP 2 OF 3 — CHOOSE YOUR BLOODLINE</p>
+      <div id="race-grid">
+        <div class="race-card" data-race="homo_sapien">
+          <div class="race-name">Homo Sapien</div>
+          <div class="race-mods">STR +0 · DEX +0 · CON +0</div>
+          <div class="race-tagline">The dominant species. Adaptable, stubborn, and occasionally brilliant.</div>
+        </div>
+        <div class="race-card" data-race="neanderthal">
+          <div class="race-name">Neanderthal</div>
+          <div class="race-mods">STR +3 · DEX −2 · CON +2 · +10 HP</div>
+          <div class="race-tagline">Stronger than any sapien. Supposedly extinct. Reportedly.</div>
+        </div>
+        <div class="race-card" data-race="nomad">
+          <div class="race-name">Nomad</div>
+          <div class="race-mods">STR −1 · DEX +3 · CON +0</div>
+          <div class="race-tagline">Twelve thousand years of running from everything made your bloodline fast.</div>
+        </div>
+        <div class="race-card" data-race="stone_elder">
+          <div class="race-name">Stone Elder</div>
+          <div class="race-mods">STR +1 · DEX −2 · CON +4 · +15 HP</div>
+          <div class="race-tagline">From the oldest line. Hard as the caves that made them. Older than fire.</div>
+        </div>
+        <div class="race-card" data-race="wanderer">
+          <div class="race-name">Wanderer</div>
+          <div class="race-mods">STR +1 · DEX +2 · CON +0</div>
+          <div class="race-tagline">No tribe. No roots. Absolute survival instinct.</div>
+        </div>
+        <div class="race-card" data-race="titan_kin">
+          <div class="race-name">Titan Kin</div>
+          <div class="race-mods">STR +4 · DEX −3 · CON +2 · +5 HP</div>
+          <div class="race-tagline">Something very large in your family tree. Very old. Very angry.</div>
+        </div>
+      </div>
+      <p id="race-lore" class="race-lore-text"></p>
+      <button id="char-race-btn" disabled>SELECT BLOODLINE →</button>
+    </div>
+
+    <!-- Step 3: Sex -->
+    <div id="char-step-sex" style="display:none">
+      <p class="char-step-label">STEP 3 OF 3 — CHOOSE YOUR SEX</p>
+      <div id="sex-grid">
+        <div class="sex-card" data-sex="male">
+          <div class="sex-name">Male</div>
+          <div class="sex-mod">STR +1</div>
+        </div>
+        <div class="sex-card" data-sex="female">
+          <div class="sex-name">Female</div>
+          <div class="sex-mod">DEX +1</div>
+        </div>
+        <div class="sex-card" data-sex="nonbinary">
+          <div class="sex-name">Non-Binary</div>
+          <div class="sex-mod">CON +1</div>
+        </div>
+      </div>
+      <button id="char-sex-btn" disabled>ENTER THE WORLD →</button>
+    </div>
+
   </div>
 </div>
 

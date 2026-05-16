@@ -1005,4 +1005,51 @@ const WORLD_DISCOVERIES = [
   },
 ];
 
-module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES, WORLD_DISCOVERIES };
+// Playable races — stat modifiers applied on character creation
+const RACES = {
+  homo_sapien: {
+    name   : 'Homo Sapien',
+    tagline: 'The dominant species. Adaptable, stubborn, and occasionally brilliant.',
+    lore   : 'Survived because they cooperated. Then invented bureaucracy. Still here somehow.',
+    str: 0, dex: 0, con: 0, hp_bonus: 0,
+  },
+  neanderthal: {
+    name   : 'Neanderthal',
+    tagline: 'Stronger than any sapien. Supposedly extinct. Reportedly.',
+    lore   : 'Larger brain than humans. Better cold adaptation. Gone before the flood. History is unkind to the strong.',
+    str: 3, dex: -2, con: 2, hp_bonus: 10,
+  },
+  nomad: {
+    name   : 'Nomad',
+    tagline: 'Twelve thousand years of running from everything made your bloodline fast.',
+    lore   : 'No permanent home. Maximum range. The ones who found every coast first. The ones who named them, too.',
+    str: -1, dex: 3, con: 0, hp_bonus: 0,
+  },
+  stone_elder: {
+    name   : 'Stone Elder',
+    tagline: 'From the oldest line. Hard as the caves that made them. Older than fire.',
+    lore   : 'They were here before fire. They remember things no one else does. Whether that is useful is another question.',
+    str: 1, dex: -2, con: 4, hp_bonus: 15,
+  },
+  wanderer: {
+    name   : 'Wanderer',
+    tagline: 'No tribe. No roots. Absolute survival instinct.',
+    lore   : 'Followed megafauna across three continents and watched every one go extinct. Still here. Still walking.',
+    str: 1, dex: 2, con: 0, hp_bonus: 0,
+  },
+  titan_kin: {
+    name   : 'Titan Kin',
+    tagline: 'Something very large in your family tree. Very old. Very angry.',
+    lore   : 'Every mythology in every age has giants. Something put them there. Your bloodline suggests it was not fiction.',
+    str: 4, dex: -3, con: 2, hp_bonus: 5,
+  },
+};
+
+// Sex — minor bonus on one stat
+const SEXES = {
+  male      : { name: 'Male',       str: 1, dex: 0, con: 0 },
+  female    : { name: 'Female',     str: 0, dex: 1, con: 0 },
+  nonbinary : { name: 'Non-Binary', str: 0, dex: 0, con: 1 },
+};
+
+module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES, WORLD_DISCOVERIES, RACES, SEXES };

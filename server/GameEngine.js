@@ -52,6 +52,7 @@ class GameEngine {
 
     socket.on('auth',            data => this._handleAuth(socket, data));
     socket.on('create_char',     data => this._handleCreateChar(socket, data));
+    socket.on('set_race_sex',    data => this._handleSetRaceSex(socket, data));
     socket.on('submit_password', data => this._handleSubmitPassword(socket, data));
     socket.on('create_password', data => this._handleCreatePassword(socket, data));
     socket.on('command',         data => this._handleCommand(socket, data?.text || ''));
@@ -87,11 +88,44 @@ class GameEngine {
     }
   }
 
-  _handleCreateChar(socket, { charName } = {}) {
+  _handleSetRaceSex(socket, { race, sex } = {}) {
+    const session = this.sessions.getBySocket(socket.id);
+    if (!session) { socket.emit('auth_err', { message: 'Session expired.' }); return; }
+    const { RACES, SEXES } = require('./mud/WorldAges');
+    const safeRace = Object.keys(RACES).includes(race)  ? race : 'homo_sapien';
+    const safeSex  = Object.keys(SEXES).includes(sex)   ? sex  : 'male';
+    const raceMods = RACES[safeRace];
+    const sexMods  = SEXES[safeSex];
+    const char = this.chars.get(session.username);
+    if (!char) return;
+    // Apply modifiers on top of existing stats (only called once — no race means base 5)
+    const newStr = Math.max(1, char.str + raceMods.str + sexMods.str);
+    const newDex = Math.max(1, char.dex + raceMods.dex + sexMods.dex);
+    const newCon = Math.max(1, char.con + raceMods.con + sexMods.con);
+    const hpBonus = raceMods.hp_bonus || 0;
+    this.chars.update(session.username, {
+      race   : safeRace,
+      sex    : safeSex,
+      str    : newStr,
+      dex    : newDex,
+      con    : newCon,
+      max_hp : char.max_hp + hpBonus,
+      hp     : Math.min(char.hp + hpBonus, char.max_hp + hpBonus),
+    });
+    const updated = this.chars.get(session.username);
+    socket.emit('auth_ok', { username: session.username, char: this._clientChar(updated, session.username), isNew: false });
+    this._describeRoom(socket, session.username, updated.room_id);
+    this._roomBroadcast(updated.room_id, 'arrive', { text: `${updated.name} appears.`, username: session.username }, socket.id);
+    this._broadcastWorld();
+  }
+
+  _handleCreateChar(socket, { charName, race, sex } = {}) {
     const username = socket._pendingUsername;
     if (!username) { socket.emit('auth_err', { message: 'Session expired. Refresh and try again.' }); return; }
-    const safeName = (charName || username).trim().replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 20) || username;
-    this.chars.create(username, safeName);
+    const safeName  = (charName || username).trim().replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 20) || username;
+    const safeRace  = ['homo_sapien','neanderthal','nomad','stone_elder','wanderer','titan_kin'].includes(race) ? race : 'homo_sapien';
+    const safeSex   = ['male','female','nonbinary'].includes(sex) ? sex : 'male';
+    this.chars.create(username, safeName, safeRace, safeSex);
     // Check flood threshold whenever a new player registers
     this.flood?.check();
     // Don't enter the world yet — ask them to set a password first
@@ -150,6 +184,12 @@ class GameEngine {
   _completeAuth(socket, username, char, isNew) {
     this.sessions.add(socket.id, username, char.room_id);
     socket.join(`room_${char.room_id}`);
+
+    // Existing characters without a race/sex get sent to the picker (keeps all progress)
+    if (!isNew && !char.race) {
+      socket.emit('needs_race_sex', { username });
+      return;
+    }
 
     socket.emit('auth_ok', { username, char: this._clientChar(char, username), isNew });
 
@@ -414,10 +454,14 @@ class GameEngine {
   _cmdStats(socket, username) {
     const char = this.chars.get(username);
     if (!char) return;
-    const room  = ROOMS[char.room_id];
-    const gold  = this.gold.balance(username);
+    const room     = ROOMS[char.room_id];
+    const gold     = this.gold.balance(username);
+    const { RACES, SEXES } = require('./mud/WorldAges');
+    const raceName = RACES[char.race]?.name   || char.race   || 'Unknown';
+    const sexName  = SEXES[char.sex]?.name    || char.sex    || 'Unknown';
     const lines = [
       `── ${char.name}  Lv.${char.level} ──────────────`,
+      `   Race: ${raceName}   Sex: ${sexName}`,
       `   HP  ${char.hp}/${char.max_hp}   XP  ${char.xp}/${char.xp_next}`,
       `   STR ${char.str}   DEX ${char.dex}   CON ${char.con}`,
       `   Gold: ${GoldBridge.fmt(gold)}   Kills: ${char.kills}   Deaths: ${char.deaths}`,
@@ -1063,6 +1107,8 @@ class GameEngine {
     return {
       username,
       name      : char.name,
+      race      : char.race || 'homo_sapien',
+      sex       : char.sex  || 'male',
       level     : char.level,
       xp        : char.xp,
       xp_next   : char.xp_next,

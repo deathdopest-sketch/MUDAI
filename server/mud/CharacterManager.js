@@ -2,7 +2,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { ITEM_TEMPLATES } = require('./WorldAges');
+const { ITEM_TEMPLATES, RACES, SEXES } = require('./WorldAges');
 
 const STARTING_ITEMS = [
   { id: 'flint_knife', equipped: true,  slot: 'weapon', quantity: 1 },
@@ -95,19 +95,25 @@ class CharacterManager {
     }
   }
 
-  create(username, charName) {
-    const k   = username.toLowerCase();
-    const con = 5;
+  create(username, charName, race = 'homo_sapien', sex = 'male') {
+    const k        = username.toLowerCase();
+    const raceMods = RACES[race]    || RACES.homo_sapien;
+    const sexMods  = SEXES[sex]     || SEXES.male;
+    const str = Math.max(1, 5 + raceMods.str + sexMods.str);
+    const dex = Math.max(1, 5 + raceMods.dex + sexMods.dex);
+    const con = Math.max(1, 5 + raceMods.con + sexMods.con);
     const char = {
       username,
       name        : charName,
+      race        : race || 'homo_sapien',
+      sex         : sex  || 'male',
       level       : 1,
       xp          : 0,
       xp_next     : xpForNextLevel(1),
-      hp          : calcMaxHp(1, con),
-      max_hp      : calcMaxHp(1, con),
-      str         : 5,
-      dex         : 5,
+      hp          : calcMaxHp(1, con) + (raceMods.hp_bonus || 0),
+      max_hp      : calcMaxHp(1, con) + (raceMods.hp_bonus || 0),
+      str,
+      dex,
       con,
       room_id     : 'cave_mouth',
       age_born    : 0,

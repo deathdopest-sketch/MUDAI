@@ -47,13 +47,24 @@ html, body {
   z-index: 100;
 }
 
-#auth-box, #char-box, #password-box {
+#auth-box, #password-box {
   background: var(--bg-panel);
   border: 1px solid var(--border);
   padding: 40px 48px;
   text-align: center;
   max-width: 600px;
   width: 90%;
+}
+
+#char-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 32px 40px;
+  text-align: center;
+  max-width: 760px;
+  width: 96%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 #auth-logo {
@@ -72,9 +83,98 @@ html, body {
   text-transform: uppercase;
 }
 
-#auth-form, #char-box, #password-box {
+#auth-form, #password-box {
   display: flex; flex-direction: column; gap: 12px; align-items: center;
 }
+
+/* ── Character creator steps ──────────────────────────── */
+.char-step-label {
+  color: var(--green);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.char-step-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+
+#char-step-name {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+
+/* Race grid */
+#race-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+.race-card {
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.race-card:hover { border-color: var(--green-dim); background: rgba(0,230,118,0.04); }
+.race-card.selected { border-color: var(--green); background: rgba(0,230,118,0.08); }
+.race-name { color: var(--text-bright); font-size: 13px; margin-bottom: 4px; }
+.race-mods { color: var(--gold); font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
+.race-tagline { color: var(--text-dim); font-size: 11px; line-height: 1.4; }
+
+.race-lore-text {
+  color: var(--system);
+  font-size: 11px;
+  min-height: 18px;
+  margin: 8px 0 4px;
+  font-style: italic;
+}
+
+/* Sex grid */
+#sex-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.sex-card {
+  border: 1px solid var(--border);
+  padding: 16px 28px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 110px;
+}
+.sex-card:hover { border-color: var(--green-dim); background: rgba(0,230,118,0.04); }
+.sex-card.selected { border-color: var(--green); background: rgba(0,230,118,0.08); }
+.sex-name { color: var(--text-bright); font-size: 14px; margin-bottom: 6px; }
+.sex-mod  { color: var(--gold); font-size: 11px; }
+
+/* Creator buttons */
+#char-name-btn, #char-race-btn, #char-sex-btn {
+  background: transparent;
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 3px;
+  padding: 10px 28px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+#char-name-btn:hover, #char-race-btn:hover:not(:disabled), #char-sex-btn:hover:not(:disabled) {
+  background: var(--green); color: var(--bg);
+}
+#char-race-btn:disabled, #char-sex-btn:disabled {
+  border-color: var(--border); color: var(--text-dim); cursor: default;
+}
+
+/* Race/sex shown in sidebar */
+.char-race { color: var(--text-dim); font-size: 11px; }
 
 #auth-input, #char-input {
   background: var(--bg-input);

@@ -113,20 +113,101 @@ function submitPassword() {
   }
 }
 
+// ── Character creator (multi-step) ───────────────────────────────────────────
+let _pendingCharName = '';
+let _pendingRace     = '';
+let _pendingSex      = '';
+
+const charStepName = $('char-step-name');
+const charStepRace = $('char-step-race');
+const charStepSex  = $('char-step-sex');
+const raceLoreText = $('race-lore');
+
+let _returningPlayer = false;
+
 socket.on('needs_char_create', ({ username }) => {
   myUsername = username;
-  authOverlay.style.display = 'none';
-  charOverlay.style.display = 'flex';
+  _returningPlayer = false;
+  authOverlay.style.display  = 'none';
+  charStepName.style.display = 'block';
+  charStepRace.style.display = 'none';
+  charStepSex.style.display  = 'none';
+  charOverlay.style.display  = 'flex';
+  charInput.value = '';
   charInput.focus();
 });
 
-$('char-btn').addEventListener('click', submitChar);
-charInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitChar(); });
+// Existing player needs to pick race/sex (skips name step)
+socket.on('needs_race_sex', ({ username }) => {
+  myUsername = username;
+  _returningPlayer = true;
+  authOverlay.style.display  = 'none';
+  passwordOverlay.style.display = 'none';
+  charStepName.style.display = 'none';
+  charStepRace.style.display = 'block';
+  charStepSex.style.display  = 'none';
+  // Update label for returning players
+  charStepRace.querySelector('.char-step-label').textContent = 'ONE-TIME SETUP — CHOOSE YOUR BLOODLINE';
+  charOverlay.style.display  = 'flex';
+});
+
+// Step 1 → 2: Name
+$('char-name-btn').addEventListener('click', advanceToRace);
+charInput.addEventListener('keydown', e => { if (e.key === 'Enter') advanceToRace(); });
+
+function advanceToRace() {
+  const name = charInput.value.trim() || myUsername;
+  _pendingCharName = name;
+  charStepName.style.display = 'none';
+  charStepRace.style.display = 'block';
+}
+
+// Step 2: Race selection
+const RACE_LORE = {
+  homo_sapien : 'Survived because they cooperated. Then invented bureaucracy. Still here somehow.',
+  neanderthal : 'Larger brain than humans. Better cold adaptation. Gone before the flood. History is unkind to the strong.',
+  nomad       : 'No permanent home. Maximum range. The ones who found every coast first. The ones who named them, too.',
+  stone_elder : 'They were here before fire. They remember things no one else does. Whether that is useful is another question.',
+  wanderer    : 'Followed megafauna across three continents and watched every one go extinct. Still here. Still walking.',
+  titan_kin   : 'Every mythology in every age has giants. Something put them there. Your bloodline suggests it was not fiction.',
+};
+
+document.querySelectorAll('.race-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.race-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    _pendingRace = card.dataset.race;
+    raceLoreText.textContent = RACE_LORE[_pendingRace] || '';
+    $('char-race-btn').disabled = false;
+  });
+});
+
+$('char-race-btn').addEventListener('click', () => {
+  if (!_pendingRace) return;
+  charStepRace.style.display = 'none';
+  charStepSex.style.display  = 'block';
+});
+
+// Step 3: Sex selection
+document.querySelectorAll('.sex-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.sex-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    _pendingSex = card.dataset.sex;
+    $('char-sex-btn').disabled = false;
+  });
+});
+
+$('char-sex-btn').addEventListener('click', submitChar);
 
 function submitChar() {
-  const name = charInput.value.trim() || myUsername;
+  if (!_pendingSex) return;
   charOverlay.style.display = 'none';
-  socket.emit('create_char', { charName: name });
+  if (_returningPlayer) {
+    socket.emit('set_race_sex', { race: _pendingRace, sex: _pendingSex });
+  } else {
+    socket.emit('create_char', { charName: _pendingCharName, race: _pendingRace, sex: _pendingSex });
+  }
 }
 
 socket.on('auth_ok', ({ username, char, isNew }) => {
@@ -185,9 +266,13 @@ function renderChar(char) {
       ? `<div class="char-pet">🌑 The Void seeps around you. You feel it mending your wounds.</div>`
       : '';
 
+  const RACE_DISPLAY = { homo_sapien:'Homo Sapien', neanderthal:'Neanderthal', nomad:'Nomad', stone_elder:'Stone Elder', wanderer:'Wanderer', titan_kin:'Titan Kin' };
+  const SEX_DISPLAY  = { male:'Male', female:'Female', nonbinary:'Non-Binary' };
+  const raceLine = char.race ? `<span class="char-race">${RACE_DISPLAY[char.race] || char.race} · ${SEX_DISPLAY[char.sex] || char.sex}</span>` : '';
+
   charDisplay.innerHTML = `
     <div class="char-name">${esc(char.name)}${founderBadge}</div>
-    <div class="char-level dim">Level ${char.level}</div>
+    <div class="char-level dim">Level ${char.level}${raceLine ? ' — ' : ''}${raceLine}</div>
     <div style="margin-top:8px">
       <div class="stat-bar-wrap">
         <span class="stat-label" style="color:var(--red)">HP</span>
