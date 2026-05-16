@@ -471,6 +471,73 @@ const ITEM_TEMPLATES = {
     damage_min: 2, damage_max: 4, value: 10, age: 0,
     description: 'You sharpened a stick. A start.',
   },
+  // Pre-fire primitive items (found before fire is discovered)
+  crude_log: {
+    id: 'crude_log', name: 'Crude Log', type: 'weapon', slot: 'weapon',
+    damage_min: 1, damage_max: 3, value: 5, age: 0,
+    description: 'A heavy branch torn from a dead tree. It hits things.',
+  },
+  wooden_pole: {
+    id: 'wooden_pole', name: 'Wooden Pole', type: 'weapon', slot: 'weapon',
+    damage_min: 1, damage_max: 4, value: 8, age: 0,
+    description: 'A long stripped branch. More reach than a rock. Barely.',
+  },
+  raw_stick: {
+    id: 'raw_stick', name: 'Stick', type: 'material', value: 2, age: 0,
+    description: 'A stick.',
+  },
+  sharp_rock: {
+    id: 'sharp_rock', name: 'Sharp Rock', type: 'material', value: 3, age: 0,
+    description: 'A rock with a naturally keen edge. Good for cutting. Better for stabbing.',
+  },
+  round_stone: {
+    id: 'round_stone', name: 'Round Stone', type: 'material', value: 2, age: 0,
+    description: 'Fits the palm perfectly. Good for throwing. Better for clubbing.',
+  },
+  // Craftable Stone Age weapons
+  crude_spear: {
+    id: 'crude_spear', name: 'Crude Spear', type: 'weapon', slot: 'weapon',
+    damage_min: 3, damage_max: 7, value: 35, age: 0,
+    description: 'A stick with a sharp rock lashed to the end. Your first real weapon.',
+  },
+  crude_club: {
+    id: 'crude_club', name: 'Crude Club', type: 'weapon', slot: 'weapon',
+    damage_min: 3, damage_max: 6, value: 30, age: 0,
+    description: 'A stick with a stone wrapped in sinew. Heavy. Satisfying.',
+  },
+  fire_hardened_spear: {
+    id: 'fire_hardened_spear', name: 'Fire-Hardened Spear', type: 'weapon', slot: 'weapon',
+    damage_min: 5, damage_max: 11, value: 120, age: 0,
+    description: 'The tip tempered in open flame. Doesn\'t rot. Doesn\'t bend.',
+  },
+  stone_hatchet: {
+    id: 'stone_hatchet', name: 'Stone Hatchet', type: 'weapon', slot: 'weapon',
+    damage_min: 6, damage_max: 12, value: 180, age: 0,
+    description: 'A sharp rock fire-sealed onto a handle. The ancestor of every axe ever made.',
+  },
+  // Pre-Flood tech fragments (post-Flood remnants of the before-time, found via explore)
+  old_tech_fragment: {
+    id: 'old_tech_fragment', name: 'Old Tech Fragment', type: 'material', value: 150, age: 0,
+    description: 'A shard of something that once hummed with power. You don\'t know what it is, but it feels important.',
+  },
+  machine_cog: {
+    id: 'machine_cog', name: 'Machine Cog', type: 'material', value: 200, age: 0,
+    description: 'A perfectly machined gear, too precise to have been made by hand. From a machine no one alive has ever seen.',
+  },
+  pre_flood_circuit: {
+    id: 'pre_flood_circuit', name: 'Pre-Flood Circuit', type: 'material', value: 400, age: 0,
+    description: 'Thin copper lines on a green board, miraculously intact. It predates everything you know.',
+  },
+  energy_cell_husk: {
+    id: 'energy_cell_husk', name: 'Energy Cell Husk', type: 'material', value: 300, age: 0,
+    description: 'A drained cylinder that once held enough energy to light a city. Completely dead. Not natural.',
+  },
+  assembled_device: {
+    id: 'assembled_device', name: 'Assembled Device', type: 'weapon', slot: 'weapon',
+    damage_min: 18, damage_max: 35, value: 0, age: 0,
+    cannot_drop: true,
+    description: 'You don\'t know what you made. It hums. It crackles. When you point it, things die. The old world made these.',
+  },
   // Stone Age armor
   hide_tunic: {
     id: 'hide_tunic', name: 'Hide Tunic', type: 'armor', slot: 'body',
@@ -603,6 +670,111 @@ const ITEM_TEMPLATES = {
   dragon_scale : { id: 'dragon_scale', name: 'Dragon Scale',  type: 'material', value: 600, age: 3 },
   elder_rune   : { id: 'elder_rune',   name: 'Elder Rune',    type: 'material', value: 900, age: 3 },
 
+  // ── Discovery-unlocked items ──────────────────────────────────────────────
+
+  // Stone Age unlocks
+  cooked_meat: {
+    id: 'cooked_meat', name: 'Cooked Meat', type: 'consumable',
+    heal: 25, value: 35, age: 0,
+    description: 'Fire changed everything. Even the taste of food.',
+  },
+  cave_painting: {
+    id: 'cave_painting', name: 'Cave Painting Fragment', type: 'material', value: 90, age: 0,
+    description: 'Ochre and ash on limestone. The first story ever told.',
+  },
+  ancestor_relic: {
+    id: 'ancestor_relic', name: 'Ancestor Relic', type: 'consumable',
+    heal: 45, value: 120, age: 0,
+    description: 'A carved bone fetish. Old power baked into old bone.',
+  },
+  clay_vessel: {
+    id: 'clay_vessel', name: 'Clay Vessel', type: 'material', value: 70, age: 0,
+    description: 'The first container. Civilisation began the moment humans could store things.',
+  },
+  stellar_chart: {
+    id: 'stellar_chart', name: 'Stellar Chart', type: 'material', value: 160, age: 0,
+    description: 'The sky, scratched into hide. They knew exactly where they were going.',
+  },
+  spirit_totem: {
+    id: 'spirit_totem', name: 'Spirit Totem', type: 'consumable',
+    heal: 60, value: 180, age: 0,
+    description: 'The shaman carved this. It smells of old smoke and older power. Do not ask what the carvings mean.',
+  },
+
+  // Bronze Age unlocks
+  bread: {
+    id: 'bread', name: 'Bread', type: 'consumable',
+    heal: 38, value: 40, age: 1,
+    description: 'Grain plus fire plus time. Wheat became civilisation. Civilisation became wheat.',
+  },
+  clay_tablet: {
+    id: 'clay_tablet', name: 'Clay Tablet', type: 'material', value: 110, age: 1,
+    description: 'The first records. Every law, every debt, every lie — preserved in fired clay.',
+  },
+  foreign_coin: {
+    id: 'foreign_coin', name: 'Foreign Coin', type: 'material', value: 90, age: 1,
+    description: 'Minted in a city you\'ve never heard of. Worth something anyway. That\'s the point of coins.',
+  },
+  bronze_idol: {
+    id: 'bronze_idol', name: 'Bronze Idol', type: 'material', value: 220, age: 1,
+    description: 'A cast bronze god. Someone decided which god got to be cast. Power followed that decision.',
+  },
+  ancient_coin: {
+    id: 'ancient_coin', name: 'Ancient Coin', type: 'material', value: 180, age: 1,
+    description: 'Early currency. The concept of debt was born the same day as the coin.',
+  },
+
+  // Iron Age unlocks
+  philosopher_scroll: {
+    id: 'philosopher_scroll', name: 'Philosopher\'s Scroll', type: 'consumable',
+    heal: 0, xp_bonus: 75, value: 200, age: 2,
+    description: 'Dense with questions. Using it feels like thinking very hard for a very long time.',
+  },
+  siege_bolt: {
+    id: 'siege_bolt', name: 'Siege Bolt', type: 'weapon', slot: 'weapon',
+    damage_min: 16, damage_max: 28, value: 480, age: 2,
+    description: 'A steel bolt designed to punch through walls. It also works on people.',
+  },
+  alchemical_brew: {
+    id: 'alchemical_brew', name: 'Alchemical Brew', type: 'consumable',
+    heal: 130, value: 140, age: 2,
+    description: 'A failed attempt at immortality. Accidentally the best medicine of the age.',
+  },
+  empire_standard: {
+    id: 'empire_standard', name: 'Empire Standard', type: 'material', value: 320, age: 2,
+    description: 'A banner of conquest. The ones who flew it called it civilisation. Most people called it something else.',
+  },
+
+  // Medieval unlocks
+  holy_symbol: {
+    id: 'holy_symbol', name: 'Holy Symbol', type: 'armor', slot: 'body',
+    defense: 9, value: 500, age: 3,
+    description: 'Blessed by priests. Feared by something older. Neither of them will tell you which gods are real.',
+  },
+  plague_mask: {
+    id: 'plague_mask', name: 'Plague Mask', type: 'armor', slot: 'head',
+    defense: 11, value: 420, age: 3,
+    description: 'Beak stuffed with herbs that didn\'t work. It looked terrifying. That counts for something.',
+  },
+  printed_pamphlet: {
+    id: 'printed_pamphlet', name: 'Printed Pamphlet', type: 'consumable',
+    heal: 0, xp_bonus: 100, value: 180, age: 3,
+    description: 'Thousands of copies of a dangerous idea. Knowledge became unstoppable. The church was furious.',
+  },
+  black_powder_charge: {
+    id: 'black_powder_charge', name: 'Black Powder Charge', type: 'consumable',
+    heal: 0, combat_damage: 80, value: 250, age: 3,
+    description: 'Alchemists searching for the elixir of life made this instead. The irony was not lost on them.',
+  },
+  compass: {
+    id: 'compass', name: 'Compass', type: 'material', value: 280, age: 3,
+    description: 'Points north. The ships pointed at every coast that didn\'t know they were coming.',
+  },
+  illuminati_sigil: {
+    id: 'illuminati_sigil', name: 'Illuminati Sigil', type: 'material', value: 1800, age: 3,
+    description: 'A symbol that shouldn\'t exist. The men who made it are unnamed. They liked it that way.',
+  },
+
   // ── Death's weapons (owner-locked to username 'death') ────────────────────
   stone_scythe: {
     id: 'stone_scythe', name: 'Stone Scythe', type: 'weapon', slot: 'weapon',
@@ -658,4 +830,179 @@ const ITEM_TEMPLATES = {
   },
 };
 
-module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES };
+// World discoveries — triggered when collectiveXp crosses the threshold within that age.
+// tagline: server-wide announcement. unlock: items added to explore pools / craft recipes.
+const WORLD_DISCOVERIES = [
+  // ── Stone Age ─────────────────────────────────────────────────────────────
+  // (fire is handled separately via world.fire_discovered)
+  {
+    id: 'tracking', age: 0, xp: 1500, name: 'Animal Tracking',
+    tagline: 'ANIMAL TRACKING: You learned to read the ground. Prey got scared. Predators got dangerous.',
+    lore   : 'A tribe that can track survives winter. A tribe that can\'t feeds the wolves instead.',
+    items  : ['wolf_fang', 'bear_pelt'],
+  },
+  {
+    id: 'cooking', age: 0, xp: 3500, name: 'Cooking',
+    tagline: 'COOKING: Fire met food and food won. Also: it tasted better and your brain got bigger.',
+    lore   : 'Cooked food gave twice the calories. The brain that grew on cooked food invented everything else.',
+    items  : ['cooked_meat'],
+  },
+  {
+    id: 'cave_painting', age: 0, xp: 7000, name: 'Cave Painting',
+    tagline: 'CAVE PAINTING: Someone drew a mammoth on the wall. The first artist. The first propaganda.',
+    lore   : 'They painted what they feared and what they wanted. Often the same thing.',
+    items  : ['cave_painting'],
+  },
+  {
+    id: 'burial_rites', age: 0, xp: 12000, name: 'Burial Rites',
+    tagline: 'BURIAL RITES: The first dead were buried intentionally. Someone decided they mattered after death. The first religion started here.',
+    lore   : 'Flowers were found in a 60,000-year-old grave. Someone carried flowers into the dark for someone they loved.',
+    items  : ['ancestor_relic'],
+  },
+  {
+    id: 'pottery', age: 0, xp: 20000, name: 'Pottery',
+    tagline: 'POTTERY: Clay shaped into containers. Civilisation begins the moment you can store more than you need.',
+    lore   : 'Surplus created hierarchy. Pottery created surplus. One discovery changed everything that followed.',
+    items  : ['clay_vessel'],
+  },
+  {
+    id: 'shamanism', age: 0, xp: 30000, name: 'Shamanism',
+    tagline: 'SHAMANISM: The shaman figured out that knowing which mushroom heals is power. The first professional.',
+    lore   : 'They spoke to the dead and the animals and the fire. Whether those things answered is still debated.',
+    items  : ['spirit_totem'],
+  },
+  {
+    id: 'star_reading', age: 0, xp: 42000, name: 'Star Navigation',
+    tagline: 'STAR NAVIGATION: You mapped the sky. The world got larger and smaller at the same time.',
+    lore   : 'Every ocean crossing, every migration, every lost army that found its way home — all of it began by looking up.',
+    items  : ['stellar_chart'],
+  },
+
+  // ── Bronze Age ────────────────────────────────────────────────────────────
+  {
+    id: 'agriculture', age: 1, xp: 2500, name: 'Agriculture',
+    tagline: 'AGRICULTURE: You stopped following the food and made the food follow you. Everything got worse before it got better.',
+    lore   : 'Farming was a bad deal at first — shorter lives, harder work, worse diet. But it scaled. Violence and cities came next.',
+    items  : ['bread'],
+  },
+  {
+    id: 'writing', age: 1, xp: 5000, name: 'Writing',
+    tagline: 'WRITING: The first lie was written the day after writing was invented.',
+    lore   : 'The first written records are grain inventories and tax rolls. Not poetry. Not philosophy. Accounting.',
+    items  : ['clay_tablet'],
+  },
+  {
+    id: 'trade_routes', age: 1, xp: 9000, name: 'Trade Routes',
+    tagline: 'TRADE ROUTES: Two tribes discovered they each had what the other wanted. A third tribe figured out how to take a cut.',
+    lore   : 'The Silk Road moved silk. It moved plague, religion, mathematics, and gunpowder too. Goods are the least of it.',
+    items  : ['foreign_coin'],
+  },
+  {
+    id: 'slavery', age: 1, xp: 13000, name: 'Slavery',
+    tagline: 'SLAVERY: Winning a war began to mean owning the losers. The pyramids got built. The shame didn\'t go anywhere.',
+    lore   : 'Every great monument of the ancient world was built on this. The historians who wrote about those monuments often owned slaves.',
+    items  : [],
+  },
+  {
+    id: 'organized_religion', age: 1, xp: 17000, name: 'Organised Religion',
+    tagline: 'ORGANISED RELIGION: The priest figured out the chief needed them more than the other way around.',
+    lore   : 'The gods got names and rules and taxes. The priests got palaces. This arrangement has proved remarkably durable.',
+    items  : ['bronze_idol'],
+  },
+  {
+    id: 'mathematics', age: 1, xp: 21000, name: 'Mathematics',
+    tagline: 'MATHEMATICS: Someone counted past ten and didn\'t stop. The universe became predictable. The accountants rejoiced.',
+    lore   : 'Zero was invented by people who needed to write down debt. The concept of nothing came from the concept of owing.',
+    items  : [],
+  },
+  {
+    id: 'currency', age: 1, xp: 24000, name: 'Currency',
+    tagline: 'CURRENCY: Shiny metal became worth food. The concept of debt arrived at the same moment. Coincidence.',
+    lore   : 'The first coins were minted by states so soldiers could be paid and taxed. Banks were five centuries away. Greed arrived immediately.',
+    items  : ['ancient_coin'],
+  },
+
+  // ── Iron Age ──────────────────────────────────────────────────────────────
+  {
+    id: 'philosophy', age: 2, xp: 4000, name: 'Philosophy',
+    tagline: 'PHILOSOPHY: Someone asked "why?" and refused to stop. Most of them got executed eventually.',
+    lore   : 'Socrates asked too many questions and got poisoned for it. The questions survived. The poison didn\'t.',
+    items  : ['philosopher_scroll'],
+  },
+  {
+    id: 'democracy', age: 2, xp: 10000, name: 'Democracy',
+    tagline: 'DEMOCRACY: The radical idea that people should have a say. Ten percent of people got a say. Progress.',
+    lore   : 'Athens invented democracy and simultaneously ran on slave labour. The Athenians did not see the contradiction.',
+    items  : [],
+  },
+  {
+    id: 'siege_engines', age: 2, xp: 18000, name: 'Siege Engines',
+    tagline: 'SIEGE ENGINES: Walls were built to keep people out. Then someone invented ways through walls. Then bigger walls.',
+    lore   : 'The catapult was invented before concrete. Humanity built better weapons than buildings for most of history.',
+    items  : ['siege_bolt'],
+  },
+  {
+    id: 'engineering', age: 2, xp: 30000, name: 'Engineering',
+    tagline: 'ENGINEERING: Roads. Aqueducts. Underfloor heating. Rome had it. Half the world was still in caves.',
+    lore   : 'Roman concrete survived two thousand years of seawater. We lost the recipe for three hundred years. Lost it.',
+    items  : ['empire_standard'],
+  },
+  {
+    id: 'alchemy', age: 2, xp: 50000, name: 'Alchemy',
+    tagline: 'ALCHEMY: Failed attempts to turn lead into gold accidentally invented medicine, chemistry, and gunpowder.',
+    lore   : 'The alchemists weren\'t wrong that matter transforms. They were wrong about gold. But what they found was more valuable.',
+    items  : ['alchemical_brew'],
+  },
+  {
+    id: 'empire', age: 2, xp: 68000, name: 'Empire',
+    tagline: 'EMPIRE: One city decided it deserved to be in charge of all the other cities. Sometimes they were right.',
+    lore   : 'Every empire believed it was the last one. Every empire believed it was different. None of them were.',
+    items  : [],
+  },
+
+  // ── Medieval ─────────────────────────────────────────────────────────────
+  {
+    id: 'the_church', age: 3, xp: 8000, name: 'The Church',
+    tagline: 'THE CHURCH: One institution held a monopoly on truth, literacy, and the afterlife for a thousand years.',
+    lore   : 'They built the universities that eventually destroyed their authority. An institution that digs its own grave using its greatest achievement.',
+    items  : ['holy_symbol'],
+  },
+  {
+    id: 'black_death', age: 3, xp: 20000, name: 'The Black Death',
+    tagline: 'THE BLACK DEATH: A third of Europe died. The survivors got higher wages. Progress is complicated.',
+    lore   : 'The plague broke feudalism. The dead left land empty. The living could leave. The lords had no answer for a pathogen.',
+    items  : ['plague_mask'],
+  },
+  {
+    id: 'banking', age: 3, xp: 40000, name: 'Banking',
+    tagline: 'BANKING: The Medici figured out how to make money by lending money. God was furious. The Medici were fine.',
+    lore   : 'The Medici bank invented the letter of credit. You could move wealth across continents without moving gold. Power became abstract.',
+    items  : ['ancient_coin'],
+  },
+  {
+    id: 'printing_press', age: 3, xp: 65000, name: 'The Printing Press',
+    tagline: 'THE PRINTING PRESS: One machine ended the Church\'s monopoly on information. The Church was not happy.',
+    lore   : 'Within fifty years of Gutenberg, heresy became unstoppable. You cannot unprint an idea. The Church learned this too late.',
+    items  : ['printed_pamphlet'],
+  },
+  {
+    id: 'gunpowder', age: 3, xp: 95000, name: 'Gunpowder',
+    tagline: 'GUNPOWDER: Invented by alchemists looking for immortality. Used immediately to kill people. The irony was complete.',
+    lore   : 'The first gun was a bamboo tube. Within two centuries it ended the age of knights, castles, and everything the church had built its power on.',
+    items  : ['black_powder_charge'],
+  },
+  {
+    id: 'secret_societies', age: 3, xp: 140000, name: 'Secret Societies',
+    tagline: 'SECRET SOCIETIES: Power stopped being held publicly. The real decisions moved to rooms without windows.',
+    lore   : 'The Freemasons built the government buildings. The Rosicrucians drew the maps. Coincidence is for people who haven\'t done the reading.',
+    items  : ['illuminati_sigil'],
+  },
+  {
+    id: 'navigation', age: 3, xp: 180000, name: 'Age of Navigation',
+    tagline: 'AGE OF NAVIGATION: The compass pointed north. The ships pointed at every coast that didn\'t know they were coming.',
+    lore   : 'Discovery is what the discoverers called it. The people already there had a different word. Several, actually.',
+    items  : ['compass'],
+  },
+];
+
+module.exports = { AGES, MONSTER_TEMPLATES, ITEM_TEMPLATES, WORLD_DISCOVERIES };

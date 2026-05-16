@@ -1,8 +1,8 @@
 'use strict';
 
 const bcrypt                     = require('bcryptjs');
-const { ROOMS, STARTING_ROOM }   = require('./mud/WorldMap');
-const { AGES, ITEM_TEMPLATES }   = require('./mud/WorldAges');
+const { ROOMS, STARTING_ROOM }            = require('./mud/WorldMap');
+const { AGES, ITEM_TEMPLATES, WORLD_DISCOVERIES } = require('./mud/WorldAges');
 const { Shop }                   = require('./mud/Shop');
 const CommandParser              = require('./CommandParser');
 const GoldBridge                 = require('./economy/GoldBridge');
@@ -11,6 +11,18 @@ const ExploreData                = require('./mud/ExploreData');
 const DEATH_SCYTHES = ['stone_scythe', 'bronze_scythe', 'iron_scythe', 'reapers_scythe'];
 
 const OPPOSITES = { north: 'south', south: 'north', east: 'west', west: 'east', up: 'down', down: 'up' };
+
+// Craft recipes — ingredients consumed to produce the output item
+const CRAFT_RECIPES = [
+  // Pre-fire basics
+  { id: 'crude_spear',          needs: [{ id: 'raw_stick', qty: 1 }, { id: 'sharp_rock', qty: 1 }], fire: false },
+  { id: 'crude_club',           needs: [{ id: 'raw_stick', qty: 1 }, { id: 'round_stone', qty: 1 }], fire: false },
+  // Fire required
+  { id: 'fire_hardened_spear',  needs: [{ id: 'crude_spear', qty: 1 }], fire: true },
+  { id: 'stone_hatchet',        needs: [{ id: 'crude_club', qty: 1 }, { id: 'sharp_rock', qty: 1 }], fire: true },
+  // Old-tech reconstruction
+  { id: 'assembled_device',     needs: [{ id: 'old_tech_fragment', qty: 2 }, { id: 'pre_flood_circuit', qty: 1 }], fire: true },
+];
 
 // Best item reward when a non-founder trades a relic to The Reaper
 const RELIC_TRADE_WEAPON = { 0: 'stone_axe', 1: 'iron_spear',  2: 'war_hammer', 3: 'battle_axe' };
@@ -209,6 +221,7 @@ class GameEngine {
       case 'reaper':    return this._cmdReaper(socket, username, args.join(' '));
       case 'trade':     return this._cmdTrade(socket, username, args.join(' '));
       case 'explore':   return this._cmdExplore(socket, username);
+      case 'craft':     return this._cmdCraft(socket, username, args.join(' '));
       case 'unknown':
         this._feed(socket, 'error', `Unknown command. Type 'help' for a list.`);
     }
@@ -333,9 +346,13 @@ class GameEngine {
       if (memory) {
         this._roomBroadcast(char.room_id, 'reaper', { text: `💀 The Reaper: "${memory}"` });
       }
+      // Death's aura — bonus XP for nearby players and Death
+      this._applyDeathAura(socket, username, char, res);
       this._broadcastRoomData(char.room_id);
       // Advance world XP
       this.world.collectiveXp += res.xpGained;
+      this._checkFireDiscovery();
+      this._checkDiscoveries();
       this._checkAgeTransition();
     }
 
@@ -432,6 +449,41 @@ class GameEngine {
     if (!item) { this._feed(socket, 'error', `You don't have "${query}".`); return; }
     const tpl = ITEM_TEMPLATES[item.id];
     if (tpl?.type !== 'consumable') { this._feed(socket, 'error', "You can't use that."); return; }
+
+    // Black powder charge — damages all enemies in room
+    if (tpl.combat_damage) {
+      const monsters = this.spawner.getMonstersInRoom(char.room_id);
+      if (!monsters.length) { this._feed(socket, 'error', 'No targets here to use that on.'); return; }
+      this.chars.removeItem(username, item.id, 1);
+      let killed = 0;
+      for (const m of monsters) {
+        const dead = this.spawner.damageMonster(m.instance_id, tpl.combat_damage);
+        if (dead) { this.spawner.removeMonster(m.instance_id); killed++; }
+      }
+      this._roomBroadcast(char.room_id, 'combat', {
+        text: `💥 ${char.name} detonates the ${tpl.name}! ${tpl.combat_damage} damage to all monsters. ${killed} slain.`,
+        username,
+      });
+      this._broadcastRoomData(char.room_id);
+      socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+      return;
+    }
+
+    // XP-granting scrolls / pamphlets
+    if (tpl.xp_bonus) {
+      this.chars.removeItem(username, item.id, 1);
+      const xpResult = this.chars.awardXp(username, tpl.xp_bonus);
+      const updated  = this.chars.get(username);
+      this._feed(socket, 'info', `You study the ${tpl.name}. +${tpl.xp_bonus} XP`);
+      socket.emit('char_update', this._clientChar(updated, username));
+      if (xpResult?.levelled) {
+        this._roomBroadcast(char.room_id, 'level_up', {
+          text: `✨ ${char.name} reaches Level ${updated.level}!`, username,
+        });
+      }
+      return;
+    }
+
     const healed = this.chars.heal(username, tpl.heal || 0);
     this.chars.removeItem(username, item.id, 1);
     const updated = this.chars.get(username);
@@ -598,6 +650,7 @@ class GameEngine {
       '  reaper <question>    Consult death',
       '  trade reaper         Trade with The Reaper',
       '  explore              Search the room (once per day)',
+      '  craft [item]         Craft items (unlocks after fire)',
       '──────────────────────────────────────',
     ];
     for (const l of lines) this._feed(socket, 'help', l);
@@ -668,7 +721,10 @@ class GameEngine {
     this._feed(socket, 'info', `🔍 You search the ${room.name}...`);
 
     if (outcome === 'item') {
-      const pool   = ExploreData.EXPLORE_ITEM_POOLS[Math.min(ageMin, 3)] || ExploreData.EXPLORE_ITEM_POOLS[0];
+      const usePrefirePool = !this.world.fire_discovered && ageMin === 0;
+      const pool   = usePrefirePool
+        ? ExploreData.PRE_FIRE_ITEM_POOL
+        : (ExploreData.EXPLORE_ITEM_POOLS[Math.min(ageMin, 3)] || ExploreData.EXPLORE_ITEM_POOLS[0]);
       const itemId = ExploreData.weightedPick(pool);
       const tpl    = ITEM_TEMPLATES[itemId];
       this.chars.addItem(username, itemId, 1);
@@ -698,6 +754,133 @@ class GameEngine {
 
     } else {
       this._feed(socket, 'info', ExploreData.pick(ExploreData.EXPLORE_NOTHING));
+    }
+  }
+
+  _cmdCraft(socket, username, query) {
+    const fire = this.world.fire_discovered;
+
+    if (!query) {
+      const lines = ['── Craft Recipes ─────────────────────'];
+      for (const recipe of CRAFT_RECIPES) {
+        if (recipe.fire && !fire) continue;
+        const tpl  = ITEM_TEMPLATES[recipe.id];
+        const mats = recipe.needs.map(n => {
+          const ntpl = ITEM_TEMPLATES[n.id];
+          return `${n.qty > 1 ? `${n.qty}x ` : ''}${ntpl?.name || n.id}`;
+        }).join(' + ');
+        lines.push(`  ${tpl?.name || recipe.id}  ←  ${mats}`);
+      }
+      if (!fire) lines.push('  (Discover fire to unlock more recipes)');
+      for (const l of lines) this._feed(socket, 'info', l);
+      return;
+    }
+
+    const q      = query.toLowerCase();
+    const recipe = CRAFT_RECIPES.find(r => {
+      const tpl = ITEM_TEMPLATES[r.id];
+      return (tpl?.name || r.id).toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+    });
+
+    if (!recipe) { this._feed(socket, 'error', `No recipe for "${query}". Type 'craft' to see what you can make.`); return; }
+    if (recipe.fire && !fire) { this._feed(socket, 'error', `You need fire to craft that. The world hasn't discovered it yet.`); return; }
+
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    for (const need of recipe.needs) {
+      const inv = char.inventory.find(i => i.id === need.id);
+      const qty = inv?.quantity ?? (inv ? 1 : 0);
+      if (qty < need.qty) {
+        const ntpl = ITEM_TEMPLATES[need.id];
+        this._feed(socket, 'error', `Need ${need.qty}x ${ntpl?.name || need.id} (have ${qty}).`);
+        return;
+      }
+    }
+
+    for (const need of recipe.needs) this.chars.removeItem(username, need.id, need.qty);
+    this.chars.addItem(username, recipe.id, 1);
+    const tpl = ITEM_TEMPLATES[recipe.id];
+    this._feed(socket, 'info', `🔨 You craft: ${tpl?.name || recipe.id}!`);
+    socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+  }
+
+  _checkFireDiscovery() {
+    if (this.world.fire_discovered) return;
+    if (this.world.currentAge > 0) { this.world.fire_discovered = true; return; }
+    if (this.world.collectiveXp >= (this.world.fire_xp_threshold || 500)) {
+      this.world.fire_discovered = true;
+      this.world.save?.();
+      this.io.emit('feed', { type: 'age_transition', text: `🔥 FIRE DISCOVERED! Someone has mastered flame — the CRAFT command is now available to all players.` });
+      this.announcer?.announce('fire_discovered', `🔥 M.UD.AI: Fire has been discovered! The craft command is now unlocked. mudai.com`);
+    }
+  }
+
+  _checkDiscoveries() {
+    if (!Array.isArray(this.world.discoveries)) this.world.discoveries = [];
+    const age     = this.world.currentAge;
+    const xp      = this.world.collectiveXp;
+    const done    = new Set(this.world.discoveries);
+
+    for (const disc of WORLD_DISCOVERIES) {
+      if (disc.age !== age) continue;
+      if (done.has(disc.id)) continue;
+      if (xp < disc.xp) continue;
+
+      this.world.discoveries.push(disc.id);
+      this.world.save?.();
+
+      this.io.emit('feed', { type: 'age_transition', text: `📜 ${disc.tagline}` });
+      // Second lore line with slight delay so it lands after
+      setTimeout(() => {
+        this.io.emit('feed', { type: 'reaper', text: `💀 The Reaper: "${disc.lore}"` });
+      }, 2000);
+      this.announcer?.announce(`discovery_${disc.id}`, `📜 M.UD.AI — ${disc.name} discovered! "${disc.tagline}" mudai.com`);
+    }
+  }
+
+  _applyDeathAura(socket, username, char, res) {
+    const deathSess = this.sessions.getByUser('death');
+    if (!deathSess) return;
+
+    const isDeath    = username.toLowerCase() === 'death';
+    const deathInRoom = deathSess.roomId === char.room_id;
+
+    if (isDeath) {
+      // Death's own kill — multiply XP by 4 per other player in room
+      const others = this.sessions.getOnline().filter(p => p.roomId === char.room_id && p.username.toLowerCase() !== 'death');
+      if (others.length === 0) return;
+      const multiplier = others.length * 4;
+      const bonusXp    = res.xpGained * (multiplier - 1);
+      const xpResult   = this.chars.awardXp('death', bonusXp);
+      this._feed(socket, 'info', `💀 The Void devours — ×${multiplier} aura (${others.length} soul${others.length !== 1 ? 's' : ''} nearby)! +${bonusXp} bonus XP`);
+      socket.emit('char_update', this._clientChar(this.chars.get('death'), 'death'));
+      if (xpResult?.levelled) {
+        const lv = this.chars.get('death');
+        this._roomBroadcast(char.room_id, 'level_up', { text: `✨ Death reaches Level ${lv.level}!`, username: 'death' });
+      }
+    } else if (deathInRoom) {
+      // Non-Death player kills while Death is in the room — player gets x2, Death gets x4
+      const bonusXp  = res.xpGained;
+      const xpResult = this.chars.awardXp(username, bonusXp);
+      this._feed(socket, 'info', `✨ Death's presence doubles your XP! +${bonusXp} bonus XP`);
+      socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+      if (xpResult?.levelled) {
+        const lv = this.chars.get(username);
+        this._roomBroadcast(char.room_id, 'level_up', { text: `✨ ${lv.name} reaches Level ${lv.level}!`, username });
+      }
+
+      const deathBonus    = res.xpGained * 4;
+      const deathXpResult = this.chars.awardXp('death', deathBonus);
+      const deathSock     = this.io.sockets.sockets.get(deathSess.socketId);
+      if (deathSock) {
+        this._feed(deathSock, 'info', `💀 The Void feeds — +${deathBonus} XP from ${char.name}'s kill!`);
+        deathSock.emit('char_update', this._clientChar(this.chars.get('death'), 'death'));
+      }
+      if (deathXpResult?.levelled) {
+        const lv = this.chars.get('death');
+        this._roomBroadcast(char.room_id, 'level_up', { text: `✨ Death reaches Level ${lv.level}!`, username: 'death' });
+      }
     }
   }
 
@@ -740,6 +923,32 @@ class GameEngine {
       if (!sess) return;
       const sock = this.io.sockets.sockets.get(sess.socketId);
       if (sock) sock.emit('char_update', this._clientChar(this.chars.get('death'), 'death'));
+    }, 30_000);
+
+    // Passive regen — all players slowly heal over time
+    // Rates (tick = 30s):
+    //   Stone Age, pre-fire  → 1 HP every tick  (30s)
+    //   Stone Age, post-fire → 1 HP every 2 ticks (60s) — crude healing discovered
+    //   Bronze Age           → 1 HP every 4 ticks (120s) — healing items in shops
+    //   Iron Age+            → 1 HP every 6 ticks (180s) — potions make natural regen negligible
+    let regenTick = 0;
+    setInterval(() => {
+      regenTick++;
+      const age   = this.world.currentAge;
+      const fire  = this.world.fire_discovered;
+      const every = age === 0 ? (fire ? 2 : 1) : age === 1 ? 4 : 6;
+      if (regenTick % every !== 0) return;
+
+      for (const { username } of this.sessions.getOnline()) {
+        const c = this.chars.get(username);
+        if (!c || c.hp >= c.max_hp) continue;
+        const healed = this.chars.heal(username, 1);
+        if (healed <= 0) continue;
+        const sess = this.sessions.getByUser(username);
+        if (!sess) continue;
+        const sock = this.io.sockets.sockets.get(sess.socketId);
+        if (sock) sock.emit('char_update', this._clientChar(this.chars.get(username), username));
+      }
     }, 30_000);
   }
 
@@ -823,9 +1032,14 @@ class GameEngine {
     const oldAge  = this.world.ageName;
     this.world.currentAge++;
     const nextAge = AGES[this.world.currentAge];
-    this.world.ageName     = nextAge?.name     || `Age ${this.world.currentAge + 1}`;
-    this.world.nextAgeAt   = nextAge?.xp_threshold || 9_999_999;
-    this.world.collectiveXp = 0;
+    this.world.ageName       = nextAge?.name     || `Age ${this.world.currentAge + 1}`;
+    this.world.nextAgeAt     = nextAge?.xp_threshold || 9_999_999;
+    this.world.collectiveXp  = 0;
+    // Clear per-age discoveries so they can trigger fresh for the new age
+    this.world.discoveries = (this.world.discoveries || []).filter(id => {
+      const d = WORLD_DISCOVERIES.find(x => x.id === id);
+      return d && d.age < this.world.currentAge - 1; // keep older ages' records
+    });
     this.world.save?.();
     this.reaper.setAge(this.world.ageName);
     this._checkDeathSpecials('death');

@@ -99,22 +99,25 @@ class SupabaseStore {
       .maybeSingle();
     if (error || !data) return null;
     return {
-      currentAge  : data.current_age,
-      ageName     : data.age_name,
-      collectiveXp: Number(data.collective_xp),
-      nextAgeAt   : Number(data.next_age_at),
+      currentAge    : data.current_age,
+      ageName       : data.age_name,
+      collectiveXp  : Number(data.collective_xp),
+      nextAgeAt     : Number(data.next_age_at),
+      fire_discovered: data.fire_discovered ?? (data.current_age > 0),
     };
   }
 
   async saveWorldState(state) {
+    const payload = {
+      current_age  : state.currentAge,
+      age_name     : state.ageName,
+      collective_xp: state.collectiveXp,
+      next_age_at  : state.nextAgeAt,
+    };
+    if (typeof state.fire_discovered === 'boolean') payload.fire_discovered = state.fire_discovered;
     const { error } = await this.db
       .from('mud_world_state')
-      .update({
-        current_age  : state.currentAge,
-        age_name     : state.ageName,
-        collective_xp: state.collectiveXp,
-        next_age_at  : state.nextAgeAt,
-      })
+      .update(payload)
       .eq('id', 1);
     if (error) this.log?.warn(`[SupabaseStore] saveWorldState: ${error.message}`);
   }

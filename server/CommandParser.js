@@ -35,6 +35,8 @@ const ALIASES = {
   reaper: 'reaper', ask: 'reaper',
   // trade relic with reaper
   trade: 'trade',
+  // craft
+  craft: 'craft', make: 'craft', forge: 'craft', create: 'craft',
   // explore
   explore: 'explore', search: 'explore', scout: 'explore',
   // flee

@@ -29,9 +29,15 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 // ── File-based world state (local mode) ──────────────────────────────────────
 function loadWorldFromFile() {
   try {
-    if (fs.existsSync(WS_FILE)) return JSON.parse(fs.readFileSync(WS_FILE, 'utf8'));
+    if (fs.existsSync(WS_FILE)) {
+      const state = JSON.parse(fs.readFileSync(WS_FILE, 'utf8'));
+      if (state.fire_discovered === undefined) state.fire_discovered = state.currentAge > 0;
+      if (!Array.isArray(state.discoveries)) state.discoveries = [];
+      if (state.fire_xp_threshold === undefined) state.fire_xp_threshold = 500;
+      return state;
+    }
   } catch (_) {}
-  return { currentAge: 0, ageName: 'Stone Age', collectiveXp: 0, nextAgeAt: 50000 };
+  return { currentAge: 0, ageName: 'Stone Age', collectiveXp: 0, nextAgeAt: 50000, fire_discovered: false, fire_xp_threshold: 500, discoveries: [] };
 }
 
 function makeFileSave(worldState) {
@@ -39,10 +45,13 @@ function makeFileSave(worldState) {
     try {
       const tmp = WS_FILE + '.tmp';
       fs.writeFileSync(tmp, JSON.stringify({
-        currentAge  : worldState.currentAge,
-        ageName     : worldState.ageName,
-        collectiveXp: worldState.collectiveXp,
-        nextAgeAt   : worldState.nextAgeAt,
+        currentAge       : worldState.currentAge,
+        ageName          : worldState.ageName,
+        collectiveXp     : worldState.collectiveXp,
+        nextAgeAt        : worldState.nextAgeAt,
+        fire_discovered  : worldState.fire_discovered  || false,
+        fire_xp_threshold: worldState.fire_xp_threshold || 500,
+        discoveries      : worldState.discoveries       || [],
       }, null, 2));
       fs.renameSync(tmp, WS_FILE);
     } catch (_) {}
@@ -65,7 +74,10 @@ async function main() {
   let worldState;
   if (store) {
     worldState = (await store.getWorldState()) ||
-      { currentAge: 0, ageName: 'Stone Age', collectiveXp: 0, nextAgeAt: 50000 };
+      { currentAge: 0, ageName: 'Stone Age', collectiveXp: 0, nextAgeAt: 50000, fire_discovered: false };
+    if (worldState.fire_discovered === undefined) worldState.fire_discovered = worldState.currentAge > 0;
+    if (!Array.isArray(worldState.discoveries)) worldState.discoveries = [];
+    worldState.fire_xp_threshold = 500;
     worldState.save = () => {
       store.saveWorldState(worldState).catch(e =>
         log.warn(`[Boot] World state save failed: ${e.message}`)

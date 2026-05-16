@@ -1,35 +1,82 @@
 'use strict';
 
+// Items found before fire is discovered (raw primitives only)
+const PRE_FIRE_ITEM_POOL = [
+  { id: 'raw_stick',    weight: 35 },
+  { id: 'round_stone',  weight: 30 },
+  { id: 'sharp_rock',   weight: 25 },
+  { id: 'crude_log',    weight: 20 },
+  { id: 'wooden_pole',  weight: 18 },
+  { id: 'wolf_fang',    weight: 10 },
+  { id: 'rat_pelt',     weight: 8  },
+];
+
 // Items discoverable by explore, pooled by age_min of the room
 const EXPLORE_ITEM_POOLS = {
+  // Post-fire Stone Age
   0: [
-    { id: 'healing_herb', weight: 30 },
-    { id: 'dried_meat',   weight: 25 },
-    { id: 'wolf_fang',    weight: 20 },
-    { id: 'bear_pelt',    weight: 15 },
-    { id: 'bone_club',    weight: 7  },
-    { id: 'stone_axe',    weight: 3  },
+    { id: 'healing_herb',      weight: 28 },
+    { id: 'dried_meat',        weight: 22 },
+    { id: 'cooked_meat',       weight: 15 },
+    { id: 'wolf_fang',         weight: 18 },
+    { id: 'bear_pelt',         weight: 14 },
+    { id: 'cave_painting',     weight: 8  },
+    { id: 'clay_vessel',       weight: 6  },
+    { id: 'ancestor_relic',    weight: 4  },
+    { id: 'spirit_totem',      weight: 2  },
+    { id: 'bone_club',         weight: 6  },
+    { id: 'stone_axe',         weight: 3  },
+    { id: 'stellar_chart',     weight: 2  },
+    { id: 'old_tech_fragment', weight: 2  },
+    { id: 'machine_cog',       weight: 1  },
   ],
+  // Bronze Age
   1: [
-    { id: 'cave_mushroom', weight: 30 },
-    { id: 'boar_tusk',     weight: 25 },
-    { id: 'bronze_shard',  weight: 22 },
-    { id: 'bone_bracers',  weight: 16 },
-    { id: 'leather_armor', weight: 7  },
+    { id: 'cave_mushroom',     weight: 28 },
+    { id: 'bread',             weight: 18 },
+    { id: 'boar_tusk',         weight: 22 },
+    { id: 'bronze_shard',      weight: 20 },
+    { id: 'clay_tablet',       weight: 10 },
+    { id: 'foreign_coin',      weight: 8  },
+    { id: 'bronze_idol',       weight: 5  },
+    { id: 'ancient_coin',      weight: 4  },
+    { id: 'bone_bracers',      weight: 14 },
+    { id: 'leather_armor',     weight: 6  },
+    { id: 'old_tech_fragment', weight: 3  },
+    { id: 'machine_cog',       weight: 2  },
+    { id: 'pre_flood_circuit', weight: 1  },
   ],
+  // Iron Age
   2: [
-    { id: 'health_potion', weight: 30 },
-    { id: 'iron_ingot',    weight: 28 },
-    { id: 'runed_stone',   weight: 22 },
-    { id: 'iron_helm',     weight: 15 },
-    { id: 'iron_sword',    weight: 5  },
+    { id: 'health_potion',     weight: 28 },
+    { id: 'alchemical_brew',   weight: 8  },
+    { id: 'philosopher_scroll',weight: 6  },
+    { id: 'iron_ingot',        weight: 26 },
+    { id: 'runed_stone',       weight: 20 },
+    { id: 'empire_standard',   weight: 5  },
+    { id: 'iron_helm',         weight: 14 },
+    { id: 'siege_bolt',        weight: 4  },
+    { id: 'iron_sword',        weight: 4  },
+    { id: 'old_tech_fragment', weight: 3  },
+    { id: 'energy_cell_husk',  weight: 2  },
+    { id: 'pre_flood_circuit', weight: 1  },
   ],
+  // Medieval
   3: [
-    { id: 'dragon_brew',     weight: 25 },
-    { id: 'dark_crystal',    weight: 28 },
-    { id: 'elder_rune',      weight: 20 },
-    { id: 'health_potion',   weight: 20 },
-    { id: 'enchanted_cloak', weight: 7  },
+    { id: 'dragon_brew',           weight: 22 },
+    { id: 'printed_pamphlet',      weight: 12 },
+    { id: 'alchemical_brew',       weight: 10 },
+    { id: 'dark_crystal',          weight: 26 },
+    { id: 'elder_rune',            weight: 18 },
+    { id: 'compass',               weight: 8  },
+    { id: 'illuminati_sigil',      weight: 2  },
+    { id: 'black_powder_charge',   weight: 6  },
+    { id: 'plague_mask',           weight: 5  },
+    { id: 'holy_symbol',           weight: 5  },
+    { id: 'health_potion',         weight: 18 },
+    { id: 'enchanted_cloak',       weight: 6  },
+    { id: 'energy_cell_husk',      weight: 3  },
+    { id: 'pre_flood_circuit',     weight: 2  },
   ],
 };
 
@@ -42,6 +89,11 @@ const SECRET_ENEMIES = {
 };
 
 const EXPLORE_LORE = [
+  'Ancient carvings in the wall depict creatures long extinct — but also machines. Metal limbs. Glass eyes. Things that should not belong here.',
+  'Buried under a metre of packed dirt: a panel of smooth black glass that briefly lights up when you hold it, then dies. You have no framework for what this is.',
+  'You find a length of wire — thin, coated in something that hasn\'t rotted in what must be thousands of years. The before-time made things that lasted.',
+  'Scratched into a boulder in a script no one alive reads: diagrams. Wheels within wheels. Numbers. The old world was trying to teach whoever came after. You have no idea what it means yet.',
+  'A metal capsule half-buried in the cave wall. Inside: a rolled document, laminated, perfectly preserved. The images show cities. Towers of glass. Flying machines. Your whole age fits inside one of those buildings.',
   'Ancient carvings in the wall depict creatures long extinct. You recognise one shape from nightmares you\'ve never had.',
   'A skeleton sits propped against the wall, hands folded neatly. Someone left them that way on purpose.',
   'Strange symbols glow faintly when you press your palm to the stone, then go dark all at once.',
@@ -112,4 +164,4 @@ function rollOutcome(danger, isSafe) {
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-module.exports = { EXPLORE_ITEM_POOLS, SECRET_ENEMIES, EXPLORE_LORE, EXPLORE_NOTHING, weightedPick, rollOutcome, pick };
+module.exports = { PRE_FIRE_ITEM_POOL, EXPLORE_ITEM_POOLS, SECRET_ENEMIES, EXPLORE_LORE, EXPLORE_NOTHING, weightedPick, rollOutcome, pick };
