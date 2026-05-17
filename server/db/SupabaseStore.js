@@ -15,8 +15,8 @@ class SupabaseStore {
     return {
       username  : row.username,
       name      : row.name,
-      race      : row.race      || 'homo_sapien',
-      sex       : row.sex       || 'male',
+      race      : row.race      || null,
+      sex       : row.sex       || null,
       level     : row.level,
       xp        : row.xp,
       xp_next   : row.xp_next,

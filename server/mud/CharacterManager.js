@@ -139,11 +139,13 @@ class CharacterManager {
     const char = this._chars[k];
     if (!char) return null;
 
-    const isFounder  = char.is_founder  || false;
+    const isFounder   = char.is_founder   || false;
     const founderLore = char.founder_lore || null;
-    const gold       = char.gold        || 0;
+    const gold        = char.gold         || 0;
     const password_hash = char.password_hash || null;
-    const pet        = isFounder ? 'flood_wraith' : null;
+    const race        = char.race         || null;
+    const sex         = char.sex          || null;
+    const pet         = isFounder ? 'flood_wraith' : null;
 
     // Founders get +3 to all base stats as a permanent perk
     const str = isFounder ? 8 : 5;
@@ -172,6 +174,8 @@ class CharacterManager {
       gold,
       is_founder  : isFounder,
       founder_lore: founderLore,
+      race,
+      sex,
       pet,
       explorations: {},
       password_hash,
