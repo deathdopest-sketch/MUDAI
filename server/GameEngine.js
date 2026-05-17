@@ -7,6 +7,7 @@ const { Shop }                   = require('./mud/Shop');
 const CommandParser              = require('./CommandParser');
 const GoldBridge                 = require('./economy/GoldBridge');
 const ExploreData                = require('./mud/ExploreData');
+const { MissionSystem }          = require('./mud/MissionSystem');
 
 const DEATH_SCYTHES = ['stone_scythe', 'bronze_scythe', 'iron_scythe', 'reapers_scythe'];
 
@@ -29,12 +30,13 @@ const RELIC_TRADE_WEAPON = { 0: 'stone_axe', 1: 'iron_spear',  2: 'war_hammer', 
 const RELIC_TRADE_ARMOR  = { 0: 'hide_tunic', 1: 'leather_armor', 2: 'iron_armor', 3: 'plate_armor' };
 
 class GameEngine {
-  constructor({ io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, flood, logger }) {
+  constructor({ io, chars, spawner, combat, reaper, helper, sessions, gold, worldState, announcer, flood, logger }) {
     this.io        = io;
     this.chars     = chars;
     this.spawner   = spawner;
     this.combat    = combat;
     this.reaper    = reaper;
+    this.helper    = helper || null;
     this.sessions  = sessions;
     this.gold      = gold;
     this.world     = worldState;
@@ -43,6 +45,11 @@ class GameEngine {
     this.log       = logger;
     this.parser    = new CommandParser();
     this.shop      = new Shop(chars, gold, logger);
+    this.missions  = new MissionSystem({
+      io, chars, spawner, gold, sessions,
+      reaper: reaper, helper: helper || null,
+      worldState, logger,
+    });
   }
 
   // ── Socket lifecycle ──────────────────────────────────────────────────────
@@ -210,6 +217,7 @@ class GameEngine {
     }
 
     this._checkDeathSpecials(username);
+    this._checkLillySpecials(username);
     this.log?.info(`[GameEngine] ${username} auth OK (${isNew ? 'new' : 'returning'})`);
   }
 
@@ -262,6 +270,9 @@ class GameEngine {
       case 'trade':     return this._cmdTrade(socket, username, args.join(' '));
       case 'explore':   return this._cmdExplore(socket, username);
       case 'craft':     return this._cmdCraft(socket, username, args.join(' '));
+      case 'guide':     return this._cmdGuide(socket, username);
+      case 'lilly':     return this._cmdLilly(socket, username, args.join(' '));
+      case 'mission':   return this._cmdMission(socket, username, args[0], args.slice(1).join(' '));
       case 'unknown':
         this._feed(socket, 'error', `Unknown command. Type 'help' for a list.`);
     }
@@ -394,6 +405,17 @@ class GameEngine {
       this._checkFireDiscovery();
       this._checkDiscoveries();
       this._checkAgeTransition();
+      // Mission progress
+      const missionTriggered = this.missions.checkMissionKill(username, monsterTemplateId, char.room_id);
+      if (missionTriggered) {
+        const mEntry = this.missions._inProgress.get(username.toLowerCase());
+        this._feed(socket, 'age_transition', `⚔  Objective complete! Type 'mission choice good' or 'mission choice evil' to decide what happens next.`);
+        if (mEntry) {
+          const m = mEntry.mission;
+          this._feed(socket, 'info', `  GOOD: ${m.good.text}`);
+          this._feed(socket, 'info', `  EVIL: ${m.evil.text}`);
+        }
+      }
     }
 
     // Player died
@@ -692,9 +714,15 @@ class GameEngine {
       '  sell <item>          Sell an item',
       '  top                  Leaderboard',
       '  reaper <question>    Consult death',
+      '  ask lilly <question> Get Lilly\'s cheerful advice',
+      '  guide                Full game guide (Lilly\'s voice)',
       '  trade reaper         Trade with The Reaper',
       '  explore              Search the room (once per day)',
       '  craft [item]         Craft items (unlocks after fire)',
+      '  mission [status]     Current mission offer & alignment',
+      '  mission accept       Join active mission',
+      '  mission choice good  Make the good choice',
+      '  mission choice evil  Make the evil choice',
       '──────────────────────────────────────',
     ];
     for (const l of lines) this._feed(socket, 'help', l);
@@ -849,6 +877,136 @@ class GameEngine {
     socket.emit('char_update', this._clientChar(this.chars.get(username), username));
   }
 
+  _cmdGuide(socket, username) {
+    const char = this.chars.get(username);
+    const isLilly = username.toLowerCase() === 'lillyxo';
+    const intro = isLilly
+      ? '🌸 Yes yes, Lilly knows! She wrote this herself. Many times.'
+      : '🌸 Lilly appears! She has lived through every age and knows everything. Listen carefully, yes yes.';
+    this._feed(socket, 'reaper', intro);
+    const lines = [
+      `── GUIDE TO M.UD.AI (by Lilly) ──────────────────────`,
+      `  This world was born from nothing and will end in flood.`,
+      `  Then it starts again. Lilly has seen it many times.`,
+      `  This time she wants it to end differently. Help her.`,
+      ``,
+      `── HOW TO SURVIVE ────────────────────────────────────`,
+      `  Type a direction (n, s, e, w, u, d) to move.`,
+      `  'look' describes your current room.`,
+      `  'attack <monster>' to fight what is here.`,
+      `  'flee' to run when things go very bad.`,
+      ``,
+      `── YOUR CHARACTER ─────────────────────────────────────`,
+      `  'stats' — your full character sheet.`,
+      `  'inventory' — what you carry.`,
+      `  'equip <item>' — put something on.`,
+      `  'use <item>' — eat, drink, read, or detonate.`,
+      ``,
+      `── THE WORLD ──────────────────────────────────────────`,
+      `  'age' — world progress bar. Everyone's kills count.`,
+      `  'map' — known locations for this age.`,
+      `  Advance through: Stone → Bronze → Iron → Medieval.`,
+      `  Fire unlocks the CRAFT command (500 collective XP).`,
+      ``,
+      `── CRAFT ─────────────────────────────────────────────`,
+      `  'craft' — shows recipes. 'craft <item>' to make it.`,
+      `  Stick + Sharp Rock = Crude Spear (no fire needed).`,
+      `  Fire lets you upgrade and build more.`,
+      ``,
+      `── EXPLORE ────────────────────────────────────────────`,
+      `  'explore' in any room once per day.`,
+      `  Find items, gold, lore — or something finds you.`,
+      ``,
+      `── ECONOMY ────────────────────────────────────────────`,
+      `  Kill monsters for gold. 'shop' at merchant rooms.`,
+      `  'buy <item>' / 'sell <item>' / 'give <player> <amt>'`,
+      ``,
+      `── MISSIONS ───────────────────────────────────────────`,
+      `  The Reaper announces missions periodically.`,
+      `  'mission accept' — join (costs gold, you teleport).`,
+      `  Complete the objective, then choose: GOOD or EVIL.`,
+      `  Choices shift the world toward order or chaos.`,
+      `  'mission status' — current offer or world alignment.`,
+      ``,
+      `── SOCIAL ─────────────────────────────────────────────`,
+      `  'say <msg>' — talk to your room.`,
+      `  'shout <msg>' — everyone hears this.`,
+      `  'who' — online players and their locations.`,
+      `  'top' — leaderboard.`,
+      ``,
+      `── SPECIAL COMMANDS ───────────────────────────────────`,
+      `  'reaper <question>' — ask The Reaper anything.`,
+      `  'ask lilly <question>' — Lilly gives game advice.`,
+      `  'trade reaper' — trade flood relics (founders).`,
+      ``,
+      `  Lilly says: stay alive, pick the good choices when`,
+      `  you can, and maybe — this time — no flood. Yes yes.`,
+      `──────────────────────────────────────────────────────`,
+    ];
+    for (const l of lines) this._feed(socket, 'help', l);
+  }
+
+  async _cmdLilly(socket, username, question) {
+    const char = this.chars.get(username);
+    if (!this.helper) {
+      this._feed(socket, 'reaper', `🌸 Lilly waves from across the cave. She seems busy right now. Try the 'guide' command!`);
+      return;
+    }
+    if (!question) {
+      const intro = this.helper.getGuideIntro();
+      this._feed(socket, 'reaper', `🌸 ${intro}`);
+      this._feed(socket, 'info', `Tip: Type 'ask lilly <your question>' to get her attention, or 'guide' for the full guide.`);
+      return;
+    }
+    this._feed(socket, 'system', `🌸 Lilly listens...`);
+    const line = await this.helper.narrate('custom', { question, playerName: char?.name || username });
+    this._feed(socket, 'reaper', `🌸 Lilly: "${line || 'Friend asks a good question! Lilly is thinking very hard. Try again yes?'}"`);
+  }
+
+  _cmdMission(socket, username, sub, rest) {
+    const s = (sub || '').toLowerCase();
+
+    if (!s || s === 'status') {
+      this.missions.missionStatus(socket);
+      return;
+    }
+    if (s === 'accept') {
+      this.missions.accept(username, socket);
+      return;
+    }
+    if (s === 'choice') {
+      const choice = (rest || '').toLowerCase().trim();
+      if (choice !== 'good' && choice !== 'evil') {
+        this._feed(socket, 'error', `Choose 'mission choice good' or 'mission choice evil'.`);
+        return;
+      }
+      this.missions.makeChoice(username, choice, socket);
+      const updated = this.chars.get(username);
+      if (updated) socket.emit('char_update', this._clientChar(updated, username));
+      return;
+    }
+    this._feed(socket, 'info', `Mission commands: 'mission status', 'mission accept', 'mission choice good/evil'`);
+  }
+
+  _checkLillySpecials(username) {
+    if (username.toLowerCase() !== 'lillyxo') return;
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    // Lilly's flower pet
+    if (!char.inventory.find(i => i.id === 'lilly_flower')) {
+      this.chars.addItem(username, 'lilly_flower', 1);
+    }
+    if (char.pet !== 'lilly_flower') {
+      this.chars.update(username, { pet: 'lilly_flower' });
+    }
+
+    // Helper staff weapon
+    if (!char.inventory.find(i => i.id === 'helper_staff')) {
+      this.chars.addItem(username, 'helper_staff', 1);
+    }
+  }
+
   _checkFireDiscovery() {
     if (this.world.fire_discovered) return;
     if (this.world.currentAge > 0) { this.world.fire_discovered = true; return; }
@@ -969,6 +1127,29 @@ class GameEngine {
       if (sock) sock.emit('char_update', this._clientChar(this.chars.get('death'), 'death'));
     }, 30_000);
 
+    // LillyXO heals 3 HP every 15 seconds (twice as fast, thrice as much)
+    setInterval(() => {
+      const char = this.chars.get('lillyxo');
+      if (!char || char.hp >= char.max_hp) return;
+      const healed = this.chars.heal('lillyxo', 3);
+      if (healed <= 0) return;
+      const sess = this.sessions.getByUser('lillyxo');
+      if (!sess) return;
+      const sock = this.io.sockets.sockets.get(sess.socketId);
+      if (sock) sock.emit('char_update', this._clientChar(this.chars.get('lillyxo'), 'lillyxo'));
+    }, 15_000);
+
+    // Mission offer — random interval between 15 and 25 minutes
+    const scheduleMissionOffer = () => {
+      const delay = (15 + Math.random() * 10) * 60_000;
+      setTimeout(() => {
+        this.io.emit('feed', { type: 'reaper', text: `💀 The Reaper: "Attention — there is work to be done. Someone has called for aid. Listen carefully."` });
+        setTimeout(() => this.missions.offerMission(), 3000);
+        scheduleMissionOffer();
+      }, delay);
+    };
+    scheduleMissionOffer();
+
     // Passive regen — all players slowly heal over time
     // Rates (tick = 30s):
     //   Stone Age, pre-fire  → 1 HP every tick  (30s)
@@ -1086,6 +1267,7 @@ class GameEngine {
     });
     this.world.save?.();
     this.reaper.setAge(this.world.ageName);
+    this.helper?.setAge(this.world.ageName);
     this._checkDeathSpecials('death');
 
     this.io.emit('feed', { type: 'age_transition', text: `🌍 THE WORLD ADVANCES! The ${oldAge} is over. Welcome to the ${this.world.ageName}.` });
@@ -1123,6 +1305,7 @@ class GameEngine {
       gold      : this.gold.balance(username),
       inventory : char.inventory,
       is_founder: char.is_founder || false,
+      is_lilly  : username.toLowerCase() === 'lillyxo',
       pet       : char.pet        || null,
     };
   }

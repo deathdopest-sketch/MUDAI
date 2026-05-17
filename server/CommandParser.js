@@ -33,8 +33,14 @@ const ALIASES = {
   help: 'help', '?': 'help', h: 'help',
   // reaper
   reaper: 'reaper', ask: 'reaper',
+  // lilly (helper cave girl)
+  lilly: 'lilly',
+  // missions
+  mission: 'mission',
   // trade relic with reaper
   trade: 'trade',
+  // guide
+  guide: 'guide', tutorial: 'guide', howto: 'guide',
   // craft
   craft: 'craft', make: 'craft', forge: 'craft', create: 'craft',
   // explore
@@ -77,6 +83,11 @@ class CommandParser {
     // "ask reaper <question>" → cmd: reaper, skip the word "reaper" in args
     if (first === 'ask' && rest[0]?.toLowerCase() === 'reaper') {
       return { cmd: 'reaper', args: rest.slice(1), raw: trimmed };
+    }
+
+    // "ask lilly <question>" → cmd: lilly
+    if (first === 'ask' && rest[0]?.toLowerCase() === 'lilly') {
+      return { cmd: 'lilly', args: rest.slice(1), raw: trimmed };
     }
 
     const cmd = ALIASES[first];

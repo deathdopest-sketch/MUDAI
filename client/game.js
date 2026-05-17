@@ -260,18 +260,23 @@ function renderChar(char) {
   const founderBadge = char.is_founder
     ? `<span class="founder-badge" title="Survived the Great Flood">🌊 FOUNDER</span>`
     : '';
+  const lillyBadge = char.is_lilly
+    ? `<span class="lilly-badge" title="The Helper — cave girl who has lived through every age">🌸 GUIDE</span>`
+    : '';
   const petLine = char.pet === 'flood_wraith'
     ? `<div class="char-pet">👻 Flood Wraith follows you.</div>`
     : char.pet === 'void_pet'
       ? `<div class="char-pet">🌑 The Void seeps around you. You feel it mending your wounds.</div>`
-      : '';
+      : char.pet === 'lilly_flower'
+        ? `<div class="char-pet">🌸 A cave flower blooms at your feet. It has survived every flood.</div>`
+        : '';
 
   const RACE_DISPLAY = { homo_sapien:'Homo Sapien', neanderthal:'Neanderthal', nomad:'Nomad', stone_elder:'Stone Elder', wanderer:'Wanderer', titan_kin:'Titan Kin' };
   const SEX_DISPLAY  = { male:'Male', female:'Female', nonbinary:'Non-Binary' };
   const raceLine = char.race ? `<span class="char-race">${RACE_DISPLAY[char.race] || char.race} · ${SEX_DISPLAY[char.sex] || char.sex}</span>` : '';
 
   charDisplay.innerHTML = `
-    <div class="char-name">${esc(char.name)}${founderBadge}</div>
+    <div class="char-name">${esc(char.name)}${founderBadge}${lillyBadge}</div>
     <div class="char-level dim">Level ${char.level}${raceLine ? ' — ' : ''}${raceLine}</div>
     <div style="margin-top:8px">
       <div class="stat-bar-wrap">

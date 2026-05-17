@@ -807,6 +807,42 @@ const ITEM_TEMPLATES = {
     description: 'The Void itself, condensed into something that follows you around and occasionally heals you.',
   },
 
+  // ── Lilly's specials ────────────────────────────────────────────────────────
+  lilly_flower: {
+    id: 'lilly_flower', name: 'Lilly\'s Flower', type: 'pet', slot: null,
+    value: 0, age: 0,
+    owner: 'lillyxo', cannot_drop: true,
+    description: 'A warm cave flower that has somehow survived every age and every flood. It blooms wherever Lilly goes.',
+  },
+  helper_staff: {
+    id: 'helper_staff', name: 'Helper\'s Staff', type: 'weapon', slot: 'weapon',
+    damage_min: 4, damage_max: 10, value: 0, age: 0,
+    owner: 'lillyxo', cannot_drop: true,
+    description: 'A gnarled walking staff covered in small handprints from a thousand ages. Lilly carved each one herself.',
+  },
+
+  // ── Mission reward items ────────────────────────────────────────────────────
+  ancient_remedy: {
+    id: 'ancient_remedy', name: 'Ancient Remedy', type: 'consumable', slot: null,
+    heal: 35, value: 80, age: 0,
+    description: 'A recipe older than fire. It tastes terrible and works remarkably well.',
+  },
+  tainted_essence: {
+    id: 'tainted_essence', name: 'Tainted Essence', type: 'consumable', slot: null,
+    combat_damage: 30, value: 80, age: 0,
+    description: 'Distilled from something best left unnamed. It corrodes everything it touches.',
+  },
+  mission_token: {
+    id: 'mission_token', name: 'Mission Token', type: 'consumable', slot: null,
+    xp_bonus: 200, value: 100, age: 0,
+    description: 'A mark of deeds done. Study it — the memory of what you accomplished flows inward.',
+  },
+  blood_token: {
+    id: 'blood_token', name: 'Blood Token', type: 'consumable', slot: null,
+    xp_bonus: 200, value: 100, age: 0,
+    description: 'A mark of choices made in darkness. Power flows from it regardless of conscience.',
+  },
+
   // ── Flood Relics (pre-dates all ages — founder-only equippable) ─────────────
   flood_blade: {
     id: 'flood_blade', name: 'The Flood Blade', type: 'weapon', slot: 'weapon',

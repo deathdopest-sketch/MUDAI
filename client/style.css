@@ -421,6 +421,21 @@ html, body {
   text-transform: uppercase;
 }
 
+.lilly-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #ff9ec4;
+  border: 1px solid #ff9ec455;
+  border-radius: 3px;
+  background: #1a0012;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
 .char-pet {
   margin-top: 4px;
   font-size: 11px;

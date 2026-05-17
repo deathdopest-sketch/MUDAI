@@ -12,6 +12,7 @@ const CharacterManager = require('./mud/CharacterManager');
 const MonsterSpawner   = require('./mud/MonsterSpawner');
 const CombatEngine     = require('./mud/CombatEngine');
 const TheReaper        = require('./mud/TheReaper');
+const TheHelper        = require('./mud/TheHelper');
 const FloodSystem      = require('./mud/FloodSystem');
 const SessionManager   = require('./SessionManager');
 const GoldBridge       = require('./economy/GoldBridge');
@@ -110,12 +111,20 @@ async function main() {
     groqKey  : process.env.GROQ_API_KEY || null,
     groqModel: process.env.GROQ_MODEL   || 'llama3-8b-8192',
   }, log);
+  const helper   = new TheHelper({
+    host     : process.env.OLLAMA_HOST  || 'http://localhost:11434',
+    model    : process.env.OLLAMA_MODEL || 'llama3',
+    groqKey  : process.env.GROQ_API_KEY || null,
+    groqModel: process.env.GROQ_MODEL   || 'llama3-8b-8192',
+  }, log);
   const sessions = new SessionManager();
   const combat   = new CombatEngine(chars, spawner, gold, log);
 
   spawner.init();
   reaper.checkAvailable();
+  helper.checkAvailable();
   reaper.setAge(worldState.ageName);
+  helper.setAge(worldState.ageName);
 
   // Reload any founder lore from previous floods into The Reaper's memory
   const founderMemories = chars.getAllFounderLore();
@@ -139,6 +148,7 @@ async function main() {
     age    : worldState.ageName,
     online : sessions.count(),
     reaper : reaper.available,
+    helper : helper.available,
     store  : store ? 'supabase' : 'file',
   }));
 
@@ -164,7 +174,7 @@ async function main() {
   const flood  = new FloodSystem({ chars, worldState, reaper, io, logger: log });
 
   const engine = new GameEngine({
-    io, chars, spawner, combat, reaper, sessions, gold, worldState, announcer, flood, logger: log,
+    io, chars, spawner, combat, reaper, helper, sessions, gold, worldState, announcer, flood, logger: log,
   });
   io.on('connection', socket => engine.onConnect(socket));
   engine.startTicks();
