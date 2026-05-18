@@ -37,6 +37,10 @@ const ALIASES = {
   lilly: 'lilly',
   // missions
   mission: 'mission',
+  // class transformation
+  transform: 'transform',
+  // heal ally
+  heal: 'heal',
   // trade relic with reaper
   trade: 'trade',
   // guide

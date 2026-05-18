@@ -118,15 +118,17 @@ class CharacterManager {
       room_id     : 'cave_mouth',
       age_born    : 0,
       inventory   : JSON.parse(JSON.stringify(STARTING_ITEMS)),
-      kills       : 0,
-      deaths      : 0,
-      gold        : 0,
-      is_founder  : false,
-      founder_lore: null,
-      pet         : null,
-      explorations: {},
-      created_at  : Date.now(),
-      last_seen   : Date.now(),
+      kills           : 0,
+      deaths          : 0,
+      gold            : 0,
+      is_founder      : false,
+      founder_lore    : null,
+      pet             : null,
+      explorations    : {},
+      mission_choices : { good: 0, evil: 0 },
+      char_class      : null,
+      created_at      : Date.now(),
+      last_seen       : Date.now(),
     };
     this._chars[k] = char;
     this._persist(k);
@@ -172,15 +174,90 @@ class CharacterManager {
       kills       : 0,
       deaths      : 0,
       gold,
-      is_founder  : isFounder,
-      founder_lore: founderLore,
+      is_founder      : isFounder,
+      founder_lore    : founderLore,
       race,
       sex,
       pet,
-      explorations: {},
+      explorations    : {},
+      mission_choices : { good: 0, evil: 0 },
+      char_class      : null,
       password_hash,
-      last_seen   : Date.now(),
+      last_seen       : Date.now(),
     });
+
+    this._persist(k);
+    return char;
+  }
+
+  demonReset(username) {
+    const k    = username.toLowerCase();
+    const char = this._chars[k];
+    if (!char) return null;
+
+    const password_hash     = char.password_hash     || null;
+    const race              = char.race              || 'homo_sapien';
+    const sex               = char.sex               || 'male';
+    const mission_choices   = char.mission_choices   || { good: 0, evil: 0 };
+    const gold              = char.gold              || 0;
+    const is_founder        = char.is_founder        || false;
+    const founder_lore      = char.founder_lore      || null;
+
+    // Demon stat bonuses on top of existing (uncapped)
+    const str = (char.str || 5) + 6;
+    const dex = (char.dex || 5) + 3;
+    const con = (char.con || 5) + 6;
+
+    Object.assign(char, {
+      level           : 1,
+      xp              : 0,
+      xp_next         : xpForNextLevel(1),
+      hp              : calcMaxHp(1, con),
+      max_hp          : calcMaxHp(1, con),
+      str, dex, con,
+      room_id         : 'cave_mouth',
+      age_born        : 0,
+      inventory       : [
+        { id: 'baby_zomb', equipped: false, slot: null,     quantity: 1 },
+        { id: 'riddl3',    equipped: true,  slot: 'weapon', quantity: 1 },
+      ],
+      kills           : 0,
+      deaths          : 0,
+      gold,
+      is_founder, founder_lore,
+      race, sex,
+      pet             : 'baby_zomb',
+      char_class      : 'demon',
+      mission_choices,
+      explorations    : {},
+      password_hash,
+      last_seen       : Date.now(),
+    });
+
+    this._persist(k);
+    return char;
+  }
+
+  blessedReset(username) {
+    const k    = username.toLowerCase();
+    const char = this._chars[k];
+    if (!char) return null;
+
+    const password_hash   = char.password_hash   || null;
+    const mission_choices = char.mission_choices || { good: 0, evil: 0 };
+
+    // Blessed keeps their full inventory + level, just gains new items/class
+    const hasLilly   = char.inventory.find(i => i.id === 'baby_lilly');
+    const hasThroned = char.inventory.find(i => i.id === 'throned_lilly');
+    if (!hasLilly)   char.inventory.push({ id: 'baby_lilly',    equipped: false, slot: null,     quantity: 1 });
+    if (!hasThroned) char.inventory.push({ id: 'throned_lilly', equipped: false, slot: 'weapon', quantity: 1 });
+
+    char.pet          = 'baby_lilly';
+    char.char_class   = 'blessed';
+    char.room_id      = 'cave_mouth';
+    char.mission_choices = mission_choices;
+    char.password_hash = password_hash;
+    char.last_seen    = Date.now();
 
     this._persist(k);
     return char;
@@ -212,7 +289,9 @@ class CharacterManager {
     const k    = username.toLowerCase();
     const char = this._chars[k];
     if (!char) return null;
-    char.xp += amount;
+    // Demons earn 30% XP — the price of power
+    const effective = char.char_class === 'demon' ? Math.max(1, Math.floor(amount * 0.3)) : amount;
+    char.xp += effective;
     let levelled = false;
     while (char.xp >= char.xp_next) {
       char.xp    -= char.xp_next;

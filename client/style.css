@@ -436,6 +436,41 @@ html, body {
   text-transform: uppercase;
 }
 
+.demon-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #ff4400;
+  border: 1px solid #ff440055;
+  border-radius: 3px;
+  background: #1a0800;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+.blessed-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #ffe57a;
+  border: 1px solid #ffe57a55;
+  border-radius: 3px;
+  background: #1a1500;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+.char-mission-line {
+  margin-top: 3px;
+  font-size: 10px;
+}
+
 .char-pet {
   margin-top: 4px;
   font-size: 11px;

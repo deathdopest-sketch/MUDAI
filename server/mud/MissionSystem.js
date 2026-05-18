@@ -171,11 +171,14 @@ class MissionSystem {
     this.log        = logger;
 
     // active offer window
-    this._offer        = null;   // current MISSION_TEMPLATE
-    this._offerDeadline = 0;
-    this._accepted     = new Set(); // usernames who accepted
-    this._inProgress   = new Map(); // username → { mission, room }
-    this._awaitingChoice = new Set(); // usernames who killed target, awaiting good/evil
+    this._offer          = null;
+    this._offerDeadline  = 0;
+    this._accepted       = new Set();
+    this._inProgress     = new Map();
+    this._awaitingChoice = new Set();
+
+    // transformation offers triggered by completing all-good / all-evil missions
+    this._pendingTransforms = new Map(); // username → 'demon' | 'blessed'
 
     if (!this.world.alignment)       this.world.alignment = 0;
     if (!this.world.missionHistory)  this.world.missionHistory = [];
@@ -266,10 +269,16 @@ class MissionSystem {
     const isGood = choice === 'good';
     const picked = isGood ? mission.good : mission.evil;
 
-    // Apply alignment
+    // Apply world alignment
     this.world.alignment = Math.max(-100, Math.min(100, (this.world.alignment || 0) + picked.alignment));
     this.world.missionHistory.push({ id: mission.id, username: u, choice, alignment: picked.alignment, ts: Date.now() });
     this.world.save?.();
+
+    // Track per-player mission choices
+    const charNow = this.chars.get(username);
+    const mc = { ...(charNow?.mission_choices || { good: 0, evil: 0 }) };
+    mc[choice] = (mc[choice] || 0) + 1;
+    this.chars.update(username, { mission_choices: mc });
 
     // Reward
     if (picked.item) this.chars.addItem(username, picked.item, 1);
@@ -295,6 +304,25 @@ class MissionSystem {
 
     this._awaitingChoice.delete(u);
     this._inProgress.delete(u);
+
+    // Check transformation eligibility (min 3 missions, all same type, no class yet)
+    const total = (mc.good || 0) + (mc.evil || 0);
+    const freshChar = this.chars.get(username);
+    if (total >= 3 && !freshChar?.char_class && !this._pendingTransforms.has(u)) {
+      if ((mc.evil || 0) === total) {
+        this._pendingTransforms.set(u, 'demon');
+        setTimeout(() => {
+          socket.emit('feed', { type: 'reaper', text: `🧟 Zomb: "Every choice you made was darkness. Every single one. I have been watching since the first mission. Find me — or simply type 'transform accept' when you are ready to become what you already are."` });
+          socket.emit('feed', { type: 'info',   text: `  DEMON TRANSFORMATION: Lose all items, reset to Level 1. Gain massive stat boost, Baby Zomb pet, and the talking sword Riddl3.` });
+        }, 2000);
+      } else if ((mc.good || 0) === total) {
+        this._pendingTransforms.set(u, 'blessed');
+        setTimeout(() => {
+          socket.emit('feed', { type: 'reaper', text: `🌸 Lilly: "You chose the light — every time. Every single one, friend. Lilly has been watching. She has something for you. Type 'transform accept' — you will not regret this, Lilly promises yes yes."` });
+          socket.emit('feed', { type: 'info',   text: `  LILLY BLESSING: Keep your level and inventory. Gain Baby Lilly pet and the Throned Lilly weapon.` });
+        }, 2000);
+      }
+    }
     // Caller (GameEngine._cmdMission) handles char_update with proper _clientChar format
   }
 

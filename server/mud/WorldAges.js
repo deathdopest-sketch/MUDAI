@@ -807,6 +807,28 @@ const ITEM_TEMPLATES = {
     description: 'The Void itself, condensed into something that follows you around and occasionally heals you.',
   },
 
+  // ── Class weapons/pets (demon + blessed) ───────────────────────────────────
+  baby_zomb: {
+    id: 'baby_zomb', name: 'Baby Zomb', type: 'pet', slot: null,
+    value: 0, age: 0, cannot_drop: true, pvp_enabled: true,
+    description: 'A tiny undead figure that trails behind you. Its hollow eyes glow faintly. Enables player combat. Reflects damage when you strike a fellow demon.',
+  },
+  riddl3: {
+    id: 'riddl3', name: 'Riddl3', type: 'weapon', slot: 'weapon',
+    damage_min: 18, damage_max: 38, value: 0, age: 0, cannot_drop: true,
+    description: 'A talking sword. Nobody asked for this. It tells dark jokes during combat. The jokes are not good. The sword is.',
+  },
+  baby_lilly: {
+    id: 'baby_lilly', name: 'Baby Lilly', type: 'pet', slot: null,
+    value: 0, age: 0, cannot_drop: true, pvp_enabled: true,
+    description: 'A tiny cave flower spirit. She whispers game hints and enables you to heal allies. She is very proud of you.',
+  },
+  throned_lilly: {
+    id: 'throned_lilly', name: 'Throned Lilly', type: 'weapon', slot: 'weapon',
+    damage_min: 10, damage_max: 20, value: 0, age: 0, cannot_drop: true, block_chance: 0.25,
+    description: 'A flowering staff crowned with an ancient bloom. Blocks incoming attacks on a chance. Strikes harder when defending. Gentler when hunting.',
+  },
+
   // ── Lilly's specials ────────────────────────────────────────────────────────
   lilly_flower: {
     id: 'lilly_flower', name: 'Lilly\'s Flower', type: 'pet', slot: null,
@@ -1078,6 +1100,12 @@ const RACES = {
     tagline: 'Something very large in your family tree. Very old. Very angry.',
     lore   : 'Every mythology in every age has giants. Something put them there. Your bloodline suggests it was not fiction.',
     str: 4, dex: -3, con: 2, hp_bonus: 5,
+  },
+  undead: {
+    name   : 'Undead',
+    tagline: 'The cycle does not apply to you. Nothing does.',
+    lore   : 'Beyond death. The body is a tool. The mind is what endures. Zomb\'s kind.',
+    str: 8, dex: 4, con: 6, hp_bonus: 40,
   },
 };
 

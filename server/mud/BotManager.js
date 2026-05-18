@@ -17,7 +17,7 @@ const BOT_CONFIGS = [
   {
     username  : 'zomb',
     charName  : 'Zomb',
-    race      : 'neanderthal',
+    race      : 'undead',
     sex       : 'male',
     homeRoom  : 'dark_caves',
     roamRooms : ['dark_caves', 'underground_river', 'ash_fields', 'bone_forest', 'cave_mouth'],
@@ -92,7 +92,11 @@ class BotManager {
     this.sessions = sessions;
     this.world    = worldState;
     this.log      = logger;
-    this._bots    = new Map(); // username → bot state object
+    this._bots    = new Map();
+
+    // Transformation offers — set by BotManager when qualifying player is in bot's room
+    this._pendingTransforms = new Map(); // username → 'demon' | 'blessed'
+    this._offeredTransform  = new Set(); // usernames already offered (avoid spam)
   }
 
   // Called by GameEngine when the real player logs in — immediately yield
@@ -136,7 +140,6 @@ class BotManager {
       if (bot.currentRoom !== roomId) continue;
       if (username.toLowerCase() === bot.cfg.username) continue;
       const lines = bot.cfg.type === 'lilly' ? LILLY_GREET : ZOMB_GREET;
-      // Small delay so it comes after the room description
       setTimeout(() => {
         const label = bot.cfg.type === 'lilly' ? '🌸' : '🧟';
         this.io.to(`room_${roomId}`).emit('feed', {
@@ -145,7 +148,36 @@ class BotManager {
           username: bot.cfg.username,
         });
       }, 1200);
-      break;
+      // Also check if this player qualifies for transformation
+      setTimeout(() => this._checkTransformForPlayer(username, bot), 2500);
+    }
+  }
+
+  _checkTransformForPlayer(username, bot) {
+    const u = username.toLowerCase();
+    if (this._offeredTransform.has(u)) return;
+    const char = this.chars.get(username);
+    if (!char || char.char_class) return; // already transformed
+
+    const mc    = char.mission_choices || { good: 0, evil: 0 };
+    const total = (mc.good || 0) + (mc.evil || 0);
+    if (total < 3) return;
+
+    const sess = this.sessions.getByUser(username);
+    if (!sess) return;
+    const sock = this.io.sockets.sockets.get(sess.socketId);
+    if (!sock) return;
+
+    if (bot.cfg.type === 'zomb' && (mc.evil || 0) === total) {
+      this._pendingTransforms.set(u, 'demon');
+      this._offeredTransform.add(u);
+      sock.emit('feed', { type: 'reaper', text: `🧟 Zomb turns its hollow gaze on you. "Every choice. Darkness. Every single one. I have been watching since the first mission. You are already what you pretend to be. Type 'transform accept' when you are ready to stop pretending."` });
+      sock.emit('feed', { type: 'info',   text: `  DEMON TRANSFORMATION: Lose all items, reset to Level 1. Gain massive stat boost, Baby Zomb pet, Riddl3 sword. XP earn rate reduced.` });
+    } else if (bot.cfg.type === 'lilly' && (mc.good || 0) === total) {
+      this._pendingTransforms.set(u, 'blessed');
+      this._offeredTransform.add(u);
+      sock.emit('feed', { type: 'reaper', text: `🌸 Lilly grabs your hands, eyes shining. "You chose the light — every time, friend! Every single time! Lilly has been waiting for this. She has a gift. Type 'transform accept' — Lilly promises you will not regret this yes yes."` });
+      sock.emit('feed', { type: 'info',   text: `  LILLY BLESSING: Keep your level and inventory. Gain Baby Lilly pet and the Throned Lilly weapon.` });
     }
   }
 
@@ -228,6 +260,8 @@ class BotManager {
           text    : `${label} ${bot.cfg.charName}: "${pick(lines)}"`,
           username: bot.cfg.username,
         });
+        // Check if this player qualifies for transformation
+        setTimeout(() => this._checkTransformForPlayer(p, bot), 2000);
       }
     }
     // Clean up greeted set — remove players who left

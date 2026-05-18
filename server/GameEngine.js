@@ -11,6 +11,36 @@ const { MissionSystem }          = require('./mud/MissionSystem');
 
 const DEATH_SCYTHES = ['stone_scythe', 'bronze_scythe', 'iron_scythe', 'reapers_scythe'];
 
+const RIDDL3_JOKES = [
+  "Why did the skeleton go to the party alone? He had no body to go with him. Riddl3 has said this joke 400 times. It does not improve.",
+  "What do you call a demon with no purpose? You. At least for now.",
+  "What do dead men tell? Tales. Always tales. And me. They tell me.",
+  "What has roots as nobody sees, is taller than trees, up, up, up it goes — your ego. Riddl3 answers its own riddles.",
+  "I speak without a mouth and hear without ears. I was made for combat. I chose comedy. We are all dealing with this.",
+  "Why do necromancers make terrible friends? They always bring up the dead. Unlike your kill count, which Riddl3 tracks.",
+  "What gets stronger the more you take away? Your kill count. Also your reputation among the living.",
+  "I have been inside a thousand skulls and none of them were thinking about me. This is fine. Riddl3 is fine.",
+  "The void called. It wants you to know it is not personal. Riddl3 answered. It was personal.",
+  "A demon walked into a bar. The bar did not survive. This is not a punchline. This is a report.",
+];
+
+function _pickRiddl3() {
+  return RIDDL3_JOKES[Math.floor(Math.random() * RIDDL3_JOKES.length)];
+}
+
+const BABY_LILLY_HINTS = [
+  "Baby Lilly tugs your sleeve. 'Explore every room once a day — you find items!'",
+  "Baby Lilly whispers. 'Ask the Reaper questions, yes yes. He knows dark things.'",
+  "Baby Lilly points at your inventory. 'Equip your best item! That one, yes!'",
+  "Baby Lilly blinks at you. 'The craft command — have you tried it? Fire helps.'",
+  "Baby Lilly bounces. 'Missions! The Reaper announces them. Say yes to the good ones!'",
+  "Baby Lilly murmurs. 'Other players need healing. You can do that. Use the heal command!'",
+  "Baby Lilly grabs your hand. 'The world advances when everyone fights. Fight together!'",
+  "Baby Lilly whispers urgently. 'Keep an eye on world alignment. Good choices matter, yes yes.'",
+  "Baby Lilly peeks at your stats. 'You are getting stronger. Lilly is so proud. Yes yes.'",
+  "Baby Lilly looks at the ceiling. 'The flood comes if too many bad choices. Lilly worries sometimes.'",
+];
+
 const OPPOSITES = { north: 'south', south: 'north', east: 'west', west: 'east', up: 'down', down: 'up' };
 
 // Craft recipes — ingredients consumed to produce the output item
@@ -278,6 +308,8 @@ class GameEngine {
       case 'guide':     return this._cmdGuide(socket, username);
       case 'lilly':     return this._cmdLilly(socket, username, args.join(' '));
       case 'mission':   return this._cmdMission(socket, username, args[0], args.slice(1).join(' '));
+      case 'transform': return this._cmdTransform(socket, username, args[0]);
+      case 'heal':      return this._cmdHealAlly(socket, username, args.join(' '));
       case 'unknown':
         this._feed(socket, 'error', `Unknown command. Type 'help' for a list.`);
     }
@@ -325,7 +357,11 @@ class GameEngine {
     if (!char) return;
 
     const monster = this.spawner.findInRoom(char.room_id, query);
-    if (!monster) { this._feed(socket, 'error', `No "${query}" here.`); return; }
+    if (!monster) {
+      // Try PVP
+      if (this._tryPvpAttack(socket, username, char, query)) return;
+      this._feed(socket, 'error', `No "${query}" here.`); return;
+    }
 
     const monsterTemplateId = monster.template_id; // capture before combat removes it
     const res = await this.combat.playerAttack(username, monster.instance_id);
@@ -345,12 +381,21 @@ class GameEngine {
       });
     }
 
-    // Monster retaliation
+    // Monster retaliation + Throned Lilly block
     if (!res.dead) {
       if (res.monsterHit) {
-        this._roomBroadcast(char.room_id, 'combat_monster', {
-          text: `🩸 ${res.defenderName} retaliates! ${res.monsterDamage} dmg → ${char.name}: ${res.attackerHp}/${res.attackerMaxHp} HP`,
-        });
+        const throned = fresh?.inventory.find(i => i.id === 'throned_lilly' && i.equipped);
+        if (throned && Math.random() < 0.25) {
+          // Block — heal back the damage already taken
+          this.chars.heal(username, res.monsterDamage);
+          this._roomBroadcast(char.room_id, 'combat_monster', {
+            text: `🌸 Throned Lilly BLOCKS! ${char.name} absorbs the blow — +${res.monsterDamage} HP restored!`,
+          });
+        } else {
+          this._roomBroadcast(char.room_id, 'combat_monster', {
+            text: `🩸 ${res.defenderName} retaliates! ${res.monsterDamage} dmg → ${char.name}: ${res.attackerHp}/${res.attackerMaxHp} HP`,
+          });
+        }
       } else {
         this._roomBroadcast(char.room_id, 'combat_monster', {
           text: `   ${res.defenderName} swings at ${char.name} — misses!`,
@@ -369,6 +414,11 @@ class GameEngine {
         text: `💀 ${char.name} slays the ${res.defenderName}! +${res.xpGained} XP  +${GoldBridge.fmt(res.goldGained)}`,
         username,
       });
+      // Riddl3 tells a dark joke
+      const hasRiddl3 = fresh?.inventory.find(i => i.id === 'riddl3' && i.equipped);
+      if (hasRiddl3 && Math.random() < 0.65) {
+        this._feed(socket, 'reaper', `⚔ Riddl3: "${_pickRiddl3()}"`);
+      }
       // Announce boss kills to SirLoin chatroom
       if (killedTpl?.is_boss) {
         this.announcer?.announce('boss_kill',
@@ -1013,6 +1063,181 @@ class GameEngine {
     }
   }
 
+  _cmdTransform(socket, username, sub) {
+    if ((sub || '').toLowerCase() !== 'accept') {
+      this._feed(socket, 'info', `Type 'transform accept' to accept a pending class offer.`);
+      return;
+    }
+    // Check both MissionSystem and BotManager for a pending offer
+    const u    = username.toLowerCase();
+    const type = this.missions._pendingTransforms?.get(u) || this.bots?._pendingTransforms?.get(u);
+    if (!type) {
+      this._feed(socket, 'error', `You have no pending transformation. Complete missions — all good or all evil — to unlock one.`);
+      return;
+    }
+    const char = this.chars.get(username);
+    if (!char) return;
+    if (char.char_class) {
+      this._feed(socket, 'error', `You have already been transformed.`);
+      return;
+    }
+    this.missions._pendingTransforms?.delete(u);
+    this.bots?._pendingTransforms?.delete(u);
+
+    if (type === 'demon') this._applyDemonTransform(socket, username);
+    else                  this._applyBlessedTransform(socket, username);
+  }
+
+  _applyDemonTransform(socket, username) {
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    // Leave current room for respawn notification
+    this._roomBroadcast(char.room_id, 'death', {
+      text: `💀 ${char.name} descends into darkness — the demon transformation consumes them!`,
+      username,
+    });
+    socket.leave(`room_${char.room_id}`);
+    this.sessions.setRoom(socket.id, 'cave_mouth');
+    socket.join('room_cave_mouth');
+
+    const transformed = this.chars.demonReset(username);
+    if (!transformed) return;
+
+    socket.emit('char_update', this._clientChar(transformed, username));
+    this._feed(socket, 'age_transition', `💀 DEMON TRANSFORMATION COMPLETE`);
+    this._feed(socket, 'reaper', `🧟 Zomb: "Done. You are no longer alive in any meaningful sense. The sword will introduce itself. Go. Grow. The living will learn to fear you."`);
+    this._feed(socket, 'reaper', `⚔ Riddl3: "Hello. I am Riddl3. I will be narrating your violence from now on. I have opinions. You will hear them."`);
+    this._feed(socket, 'info',   `  You wake at the Cave Mouth. Level 1. Stronger than before. XP gain reduced to 30%. PVP enabled.`);
+    this._describeRoom(socket, username, 'cave_mouth');
+    this._broadcastWorld();
+    this.io.emit('feed', { type: 'age_transition', text: `🔥 ${char.name} has undergone DEMON TRANSFORMATION — beware.` });
+  }
+
+  _applyBlessedTransform(socket, username) {
+    const char = this.chars.get(username);
+    if (!char) return;
+
+    const transformed = this.chars.blessedReset(username);
+    if (!transformed) return;
+
+    socket.emit('char_update', this._clientChar(transformed, username));
+    this._feed(socket, 'age_transition', `🌸 LILLY'S BLESSING COMPLETE`);
+    this._feed(socket, 'reaper', `🌸 Lilly: "Yes yes YES! Friend is blessed! Baby Lilly will be with you always. The Throned Lilly protects you. Use 'heal <player>' to restore allies. Lilly is SO happy."`);
+    this._feed(socket, 'info',   `  You remain at your current level. Baby Lilly grants hints and PVP. Throned Lilly blocks 25% of incoming attacks.`);
+    this.io.emit('feed', { type: 'age_transition', text: `🌸 ${char.name} has received LILLY'S BLESSING — a light in the darkness.` });
+  }
+
+  _cmdHealAlly(socket, username, target) {
+    const char = this.chars.get(username);
+    if (!char) return;
+    if (char.pet !== 'baby_lilly') {
+      this._feed(socket, 'error', `You need the Baby Lilly pet to heal others.`);
+      return;
+    }
+    if (!target) { this._feed(socket, 'error', `Heal who? Usage: heal <player>`); return; }
+
+    const targetChar = this.chars.get(target);
+    if (!targetChar) { this._feed(socket, 'error', `${target} is not in the game.`); return; }
+    const sess = this.sessions.getByUser(target);
+    if (!sess || sess.roomId !== char.room_id) {
+      this._feed(socket, 'error', `${target} is not in this room.`); return;
+    }
+    const healAmt = 15 + Math.floor(Math.random() * 11);
+    const healed  = this.chars.heal(target, healAmt);
+    this._feed(socket, 'info', `🌸 You channel Baby Lilly's warmth into ${targetChar.name}. +${healed} HP`);
+    const tSock = this.io.sockets.sockets.get(sess.socketId);
+    if (tSock) {
+      this._feed(tSock, 'info', `🌸 ${char.name} heals you! +${healed} HP`);
+      tSock.emit('char_update', this._clientChar(this.chars.get(target), target));
+    }
+  }
+
+  _tryPvpAttack(socket, username, char, query) {
+    if (!this._hasPvpPet(char)) return false;
+
+    // Find a player in the same room matching the query
+    const q = query.toLowerCase();
+    const targets = this.sessions.getOnline().filter(p =>
+      p.roomId === char.room_id &&
+      p.username.toLowerCase() !== username.toLowerCase() &&
+      !['lillyxo', 'zomb'].includes(p.username.toLowerCase()) // bots can't be attacked
+    );
+    const target = targets.find(p => {
+      const tc = this.chars.get(p.username);
+      return tc && (tc.name.toLowerCase().includes(q) || p.username.toLowerCase().includes(q));
+    });
+    if (!target) return false;
+
+    const targetChar = this.chars.get(target.username);
+    if (!targetChar) return false;
+
+    // Compute damage from equipped weapon
+    const weapon = char.inventory.find(i => i.equipped && ITEM_TEMPLATES[i.id]?.type === 'weapon');
+    const wTpl   = weapon ? ITEM_TEMPLATES[weapon.id] : null;
+    let damage = wTpl
+      ? Math.floor(Math.random() * (wTpl.damage_max - wTpl.damage_min + 1)) + wTpl.damage_min
+      : Math.max(1, Math.floor(Math.random() * char.str) + 1);
+
+    // Throned Lilly block for defender
+    const defHasThroned = targetChar.inventory?.find(i => i.id === 'throned_lilly' && i.equipped);
+    if (defHasThroned && Math.random() < 0.25) {
+      this._roomBroadcast(char.room_id, 'combat', {
+        text: `🌸 ${char.name} strikes ${targetChar.name} — BLOCKED by Throned Lilly!`,
+        username,
+      });
+      socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+      return true;
+    }
+
+    // Baby Zomb reflection: attacker (demon) hits another demon → takes 50% back
+    let selfDmg = 0;
+    if (char.pet === 'baby_zomb' && targetChar.char_class === 'demon') {
+      selfDmg = Math.floor(damage * 0.5);
+    }
+
+    const { hp: defHp, dead } = this.chars.takeDamage(target.username, damage);
+    this._roomBroadcast(char.room_id, 'combat', {
+      text: `⚔ ${char.name} attacks ${targetChar.name}! ${damage} dmg → ${defHp}/${targetChar.max_hp} HP`,
+      username,
+    });
+
+    if (selfDmg > 0) {
+      this.chars.takeDamage(username, selfDmg);
+      this._feed(socket, 'info', `🩸 Baby Zomb whispers. Demon blood. You take ${selfDmg} reflected damage.`);
+    }
+
+    if (dead) {
+      this._roomBroadcast(char.room_id, 'death', {
+        text: `💀 ${targetChar.name} has been slain by ${char.name}!`, username,
+      });
+      const tSess = this.sessions.getByUser(target.username);
+      const tSock = tSess ? this.io.sockets.sockets.get(tSess.socketId) : null;
+      setTimeout(() => {
+        const respawned = this.chars.respawn(target.username);
+        if (!respawned || !tSock || !tSess) return;
+        tSock.leave(`room_${target.roomId}`);
+        this.sessions.setRoom(tSess.socketId, STARTING_ROOM);
+        tSock.join(`room_${STARTING_ROOM}`);
+        this._feed(tSock, 'system', `You were slain by ${char.name}. You wake at the Cave Mouth.`);
+        tSock.emit('char_update', this._clientChar(respawned, target.username));
+        this._describeRoom(tSock, target.username, STARTING_ROOM);
+      }, 3000);
+    }
+
+    socket.emit('char_update', this._clientChar(this.chars.get(username), username));
+    const tSess2 = this.sessions.getByUser(target.username);
+    if (tSess2) {
+      const tSock2 = this.io.sockets.sockets.get(tSess2.socketId);
+      if (tSock2) tSock2.emit('char_update', this._clientChar(this.chars.get(target.username), target.username));
+    }
+    return true;
+  }
+
+  _hasPvpPet(char) {
+    return char.pet === 'baby_zomb' || char.pet === 'baby_lilly';
+  }
+
   _checkFireDiscovery() {
     if (this.world.fire_discovered) return;
     if (this.world.currentAge > 0) { this.world.fire_discovered = true; return; }
@@ -1144,6 +1369,19 @@ class GameEngine {
       const sock = this.io.sockets.sockets.get(sess.socketId);
       if (sock) sock.emit('char_update', this._clientChar(this.chars.get('lillyxo'), 'lillyxo'));
     }, 15_000);
+
+    // Baby Lilly random hints for blessed players
+    setInterval(() => {
+      for (const { username } of this.sessions.getOnline()) {
+        const c = this.chars.get(username);
+        if (!c || c.pet !== 'baby_lilly') continue;
+        if (Math.random() > 0.4) continue; // 40% chance each 5-min tick
+        const sess = this.sessions.getByUser(username);
+        if (!sess) continue;
+        const sock = this.io.sockets.sockets.get(sess.socketId);
+        if (sock) this._feed(sock, 'info', `🌸 ${BABY_LILLY_HINTS[Math.floor(Math.random() * BABY_LILLY_HINTS.length)]}`);
+      }
+    }, 5 * 60_000);
 
     // Mission offer — random interval between 15 and 25 minutes
     const scheduleMissionOffer = () => {
@@ -1310,9 +1548,11 @@ class GameEngine {
       room_id   : char.room_id,
       gold      : this.gold.balance(username),
       inventory : char.inventory,
-      is_founder: char.is_founder || false,
-      is_lilly  : username.toLowerCase() === 'lillyxo',
-      pet       : char.pet        || null,
+      is_founder      : char.is_founder      || false,
+      is_lilly        : username.toLowerCase() === 'lillyxo',
+      char_class      : char.char_class      || null,
+      mission_choices : char.mission_choices || { good: 0, evil: 0 },
+      pet             : char.pet             || null,
     };
   }
 }

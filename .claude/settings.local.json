@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check server/mud/MissionSystem.js)",
+      "Bash(node --check server/mud/WorldAges.js)",
+      "Bash(node --check server/GameEngine.js)",
+      "Bash(node --check server/CommandParser.js)",
+      "Bash(node --check server/index.js)"
+    ]
+  }
+}
