@@ -45,6 +45,8 @@ const ALIASES = {
   trade: 'trade',
   // guide
   guide: 'guide', tutorial: 'guide', howto: 'guide',
+  // zomb tome
+  tome: 'tome', grimoire: 'tome', scroll: 'tome',
   // craft
   craft: 'craft', make: 'craft', forge: 'craft', create: 'craft',
   // explore
