@@ -13,6 +13,7 @@ const MonsterSpawner   = require('./mud/MonsterSpawner');
 const CombatEngine     = require('./mud/CombatEngine');
 const TheReaper        = require('./mud/TheReaper');
 const TheHelper        = require('./mud/TheHelper');
+const BotManager       = require('./mud/BotManager');
 const FloodSystem      = require('./mud/FloodSystem');
 const SessionManager   = require('./SessionManager');
 const GoldBridge       = require('./economy/GoldBridge');
@@ -171,13 +172,17 @@ async function main() {
     }
   });
 
-  const flood  = new FloodSystem({ chars, worldState, reaper, io, logger: log });
+  const flood = new FloodSystem({ chars, worldState, reaper, io, logger: log });
+
+  const bots  = new BotManager({ io, chars, sessions, worldState, logger: log });
+  await bots.init();
 
   const engine = new GameEngine({
-    io, chars, spawner, combat, reaper, helper, sessions, gold, worldState, announcer, flood, logger: log,
+    io, chars, spawner, combat, reaper, helper, bots, sessions, gold, worldState, announcer, flood, logger: log,
   });
   io.on('connection', socket => engine.onConnect(socket));
   engine.startTicks();
+  bots.start();
 
   // Auto-save world state every 5 minutes
   setInterval(() => worldState.save(), 5 * 60 * 1000);

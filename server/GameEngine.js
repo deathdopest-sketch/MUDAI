@@ -30,13 +30,14 @@ const RELIC_TRADE_WEAPON = { 0: 'stone_axe', 1: 'iron_spear',  2: 'war_hammer', 
 const RELIC_TRADE_ARMOR  = { 0: 'hide_tunic', 1: 'leather_armor', 2: 'iron_armor', 3: 'plate_armor' };
 
 class GameEngine {
-  constructor({ io, chars, spawner, combat, reaper, helper, sessions, gold, worldState, announcer, flood, logger }) {
+  constructor({ io, chars, spawner, combat, reaper, helper, bots, sessions, gold, worldState, announcer, flood, logger }) {
     this.io        = io;
     this.chars     = chars;
     this.spawner   = spawner;
     this.combat    = combat;
     this.reaper    = reaper;
     this.helper    = helper || null;
+    this.bots      = bots   || null;
     this.sessions  = sessions;
     this.gold      = gold;
     this.world     = worldState;
@@ -174,6 +175,9 @@ class GameEngine {
     socket._pendingAuth    = null;
     socket._pendingUsername = null;
 
+    // If a bot holds this username, deactivate it before the real player takes over
+    this.bots?.yieldFor(username);
+
     // Now it's safe to kick any existing session
     const existing = this.sessions.getByUser(username);
     if (existing) {
@@ -218,6 +222,7 @@ class GameEngine {
 
     this._checkDeathSpecials(username);
     this._checkLillySpecials(username);
+    this.bots?.onPlayerArrive(username, char.room_id);
     this.log?.info(`[GameEngine] ${username} auth OK (${isNew ? 'new' : 'returning'})`);
   }
 
@@ -311,6 +316,7 @@ class GameEngine {
 
     this._describeRoom(socket, username, targetId);
     this._broadcastWorld();
+    this.bots?.onPlayerArrive(username, targetId);
   }
 
   async _cmdAttack(socket, username, query) {
