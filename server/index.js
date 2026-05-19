@@ -189,6 +189,15 @@ async function main() {
 
   server.listen(PORT, () => {
     log.info(`\n  M.UD.AI running → http://localhost:${PORT}\n`);
+
+    // Keep Render free-tier alive — ping own /health every 14 min to prevent spin-down
+    if (process.env.NODE_ENV === 'production') {
+      setInterval(() => {
+        http.get(`http://localhost:${PORT}/health`, res => {
+          res.resume(); // drain the response so the socket closes cleanly
+        }).on('error', () => {}); // swallow — server may not be fully ready on first tick
+      }, 14 * 60 * 1000);
+    }
   });
 }
 
