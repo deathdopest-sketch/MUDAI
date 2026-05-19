@@ -844,6 +844,66 @@ const ITEM_TEMPLATES = {
   },
 
   // ── Mission reward items ────────────────────────────────────────────────────
+
+  // Stone Age mission rewards
+  tribal_blessing: {
+    id: 'tribal_blessing', name: 'Tribal Blessing', type: 'consumable', slot: null,
+    heal: 50, value: 120, age: 0,
+    description: 'A carved token blessed at the communal fire. The warmth in it is real.',
+  },
+  spirit_ash: {
+    id: 'spirit_ash', name: 'Spirit Ash', type: 'material', value: 150, age: 0,
+    description: 'Ash from the sacred fire. Used in rituals older than the tribe that tends them.',
+  },
+  hunters_mark: {
+    id: 'hunters_mark', name: "Hunter's Mark", type: 'material', value: 90, age: 0,
+    description: 'A notched bone token. Marks you as someone who did what needed doing.',
+  },
+
+  // Bronze Age mission rewards
+  bronze_remedy: {
+    id: 'bronze_remedy', name: 'Bronze Remedy', type: 'consumable', slot: null,
+    heal: 70, value: 160, age: 1,
+    description: 'A Bronze Age medicine refined from ore and hard experience. Heals well.',
+  },
+  dark_talisman: {
+    id: 'dark_talisman', name: 'Dark Talisman', type: 'consumable', slot: null,
+    combat_damage: 50, value: 160, age: 1,
+    description: 'An amulet charged with intent best left unexamined. Stores harm for later.',
+  },
+  bronze_seal: {
+    id: 'bronze_seal', name: 'Bronze Seal', type: 'material', value: 200, age: 1,
+    description: 'A cast bronze sigil of authority. Its origins are not discussed.',
+  },
+
+  // Iron Age mission rewards
+  iron_elixir: {
+    id: 'iron_elixir', name: 'Iron Elixir', type: 'consumable', slot: null,
+    heal: 120, value: 220, age: 2,
+    description: 'Iron-age alchemy at its finest. Heals almost everything.',
+  },
+  iron_mandate: {
+    id: 'iron_mandate', name: 'Iron Mandate', type: 'consumable', slot: null,
+    xp_bonus: 400, value: 250, age: 2,
+    description: 'A writ of authority backed by iron. Study it. Understand what power looks like when used well.',
+  },
+  iron_curse: {
+    id: 'iron_curse', name: 'Iron Curse', type: 'consumable', slot: null,
+    combat_damage: 70, value: 220, age: 2,
+    description: 'Forged malice. An Iron Age weapon built from concentrated grievance.',
+  },
+
+  // Medieval mission rewards
+  dragons_gift: {
+    id: 'dragons_gift', name: "Dragon's Gift", type: 'consumable', slot: null,
+    heal: 200, value: 300, age: 3,
+    description: 'A scale voluntarily given — not taken. The warmth in it is genuine and very old.',
+  },
+  shadow_seal: {
+    id: 'shadow_seal', name: 'Shadow Seal', type: 'material', value: 350, age: 3,
+    description: "A lich lord's mark. Confers access to things you haven't yet decided whether you wanted.",
+  },
+
   ancient_remedy: {
     id: 'ancient_remedy', name: 'Ancient Remedy', type: 'consumable', slot: null,
     heal: 35, value: 80, age: 0,
